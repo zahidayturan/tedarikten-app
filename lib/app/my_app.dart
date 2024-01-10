@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:tedarikten/pages/home_page.dart';
 import 'package:tedarikten/pages/introductions_page.dart';
+import 'package:tedarikten/riverpod_management.dart';
 
 
 class MyAppBase extends ConsumerStatefulWidget {
@@ -16,6 +17,7 @@ class _MyAppBase extends ConsumerState<MyAppBase> {
 
   @override
   Widget build(BuildContext context) {
+    var watch = ref.watch(customNavBarRiverpod);
     return WillPopScope(
       onWillPop: () async{
         return false;
@@ -39,7 +41,7 @@ class _MyAppBase extends ConsumerState<MyAppBase> {
           fontFamily: "FontNormal"
         ),
         themeMode: ThemeMode.light,
-        home: widget.showApp == true ? HomePage() : IntroductionPage(),
+        home: widget.showApp == true ? watch.body() : IntroductionPage(),
       ),
     );
   }

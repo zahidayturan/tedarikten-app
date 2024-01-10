@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 
-class ProfilePageRiverpod extends ChangeNotifier {
+class AddAdvertPageRiverpod extends ChangeNotifier {
   int switchCurrentIndex = 0 ;
 
   void setswitchCurrentIndex(int index) {

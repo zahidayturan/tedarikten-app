@@ -1,5 +1,6 @@
 
 import 'package:flutter/material.dart';
+import 'package:tedarikten/pages/addAdvertPage/add_advert_page.dart';
 import 'package:tedarikten/pages/home_page.dart';
 
 class CustomBottomNavBarRiverpod extends ChangeNotifier { //statelesswidget
@@ -11,9 +12,12 @@ class CustomBottomNavBarRiverpod extends ChangeNotifier { //statelesswidget
   }
 
   Widget body(){
+    print(currentIndex);
     switch(currentIndex) {
       case 0 :
         return const HomePage();
+      case 2 :
+        return const AddAdvertPage();
       default :
         return const HomePage();
     }

@@ -40,7 +40,7 @@ class _CustomBottomNavigationBar extends ConsumerState<CustomBottomNavigationBar
     return GestureDetector(
       onTap: () {
         setState(() {
-          read.currentIndex = menuIndex;
+          read.setCurrentIndex(menuIndex);
         });
       },
       child: menuIndex == 2 ? Container(
