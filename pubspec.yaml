@@ -12,6 +12,10 @@ dependencies:
     sdk: flutter
   cupertino_icons: ^1.0.2
   flutter_riverpod: ^2.3.2
+  firebase_core: ^2.8.0
+  firebase_auth: ^4.16.0
+  cloud_firestore: ^4.14.0
+  shared_preferences: ^2.2.0
 
 dev_dependencies:
   flutter_test:
@@ -22,6 +26,7 @@ flutter:
 
   assets:
     - assets/icons/
+    - assets/logo/
 
   fonts:
     - family: FontNormal

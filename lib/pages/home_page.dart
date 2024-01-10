@@ -1,5 +1,9 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:tedarikten/constants/app_colors.dart';
+import 'package:tedarikten/pages/login_page.dart';
 import 'package:tedarikten/ui/home_app_bar.dart';
 import 'package:tedarikten/ui/navigation_bar.dart';
 
@@ -20,6 +24,8 @@ class _MyHomePageState extends State<HomePage> {
         backgroundColor: appColors.whiteDark,
         appBar: HomeAppBar(),
         bottomNavigationBar: const CustomBottomNavigationBar(),
+        drawer: getDrawer(),
+        drawerEnableOpenDragGesture: true,
         body: Padding(
           padding: const EdgeInsets.all(10.0),
           child: Column(children: [
@@ -31,10 +37,12 @@ class _MyHomePageState extends State<HomePage> {
     );
   }
 
+
+
   Widget easyAccessContainer (){
     final appColors = AppColors();
     return SizedBox(
-      height: 124,
+      height: 114,
       child: SingleChildScrollView(
         physics: const BouncingScrollPhysics(),
         scrollDirection: Axis.horizontal,
@@ -52,12 +60,162 @@ class _MyHomePageState extends State<HomePage> {
       ),
     );
   }
+  Widget getDrawer(){
+    User? user = FirebaseAuth.instance.currentUser;
+    final appColors = AppColors();
+    var size = MediaQuery.of(context).size;
+    return Drawer(
+      backgroundColor: appColors.whiteDark,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.only(
+            topRight: Radius.circular(10),
+            bottomRight: Radius.circular(10)),
+      ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          userInfo(),
+          Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 8),
+                child: GestureDetector(
+                    onTap: () async{
+                      final SharedPreferences prefs = await SharedPreferences.getInstance();
+                      await prefs.setBool("showApp", false);
+                      await FirebaseAuth.instance.signOut();
+                      setState(() {
+                      });
+                    },
+                    child: getDrawerButtonElement("App sıfırla *debug tekrar aç")),
+              ),
+              Visibility(
+                visible: user != null,
+                child: GestureDetector(
+                  onTap: () async{
+                    await FirebaseAuth.instance.signOut();
+                    setState(() {
+                    });
+                  },
+                    child: getDrawerButtonElement("Çıkış Yap")),
+              ),
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                child: SizedBox(
+                  width: size.width/3,
+                  child: Image(
+                      color: appColors.blueDark,
+                      image: AssetImage(
+                          "assets/logo/logo_text.png")),
+                ),
+              ),
+              Text("FezaiTech"),
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 6),
+                child: Text("Version 0.0.0"),
+              ),
+            ],
+          )
+        ],
+      ),
+    );
+  }
+
+  Widget getDrawerButtonElement(String text){
+    final appColors = AppColors();
+    return Container(
+      decoration: BoxDecoration(
+        color: appColors.blueDark,
+        borderRadius: BorderRadius.all(Radius.circular(5))
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 6,horizontal: 32),
+        child: Text(text,style: TextStyle(
+          color: appColors.white
+        ),),
+      ),
+    );
+  }
+
+  Widget userInfo(){
+    User? user = FirebaseAuth.instance.currentUser;
+    final appColors = AppColors();
+
+    return user != null ? FutureBuilder(
+      future: FirebaseFirestore.instance.collection('users').doc(user.uid).get(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return CircularProgressIndicator();
+        } else if (snapshot.hasError) {
+          return Text("Hata: ${snapshot.error}");
+        } else if (!snapshot.hasData || !snapshot.data!.exists) {
+          return Text("Kullanıcı bulunamadı");
+        }else {
+          Map<String, dynamic> userData = snapshot.data!.data() as Map<String, dynamic>;
+
+          String name = userData['name'];
+          String surname = userData['surname'];
+          return Padding(
+            padding: const EdgeInsets.only(left: 16,top: 16),
+            child: Row(
+              children: [
+                Container(
+                  width: 42,
+                  height: 42,
+                  decoration: BoxDecoration(
+                      color: appColors.white,
+                      shape: BoxShape.circle
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                  child: RichText(
+                      text: TextSpan(
+                          children: <TextSpan>[
+                            TextSpan(text: 'Merhaba ', style: TextStyle(color: appColors.black,fontFamily: "FontNormal",fontSize: 15)),
+                            TextSpan(text: '${name}',style: TextStyle(color: appColors.black,fontFamily: "FontBold",fontSize: 15)),
+                        ],
+                    ))
+                ),
+                Container()
+              ],
+            ),
+          );
+        }
+      },
+    ) : Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(bottom: 8,top: 16),
+          child: Text("Henüz giriş yapmadınız",style: TextStyle(color: appColors.blackLight,fontSize: 16),),
+        ),
+        Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: GestureDetector(
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => LoginPage()),
+              ).then((value) => setState((){}));
+            },
+            child: Container(
+              height: 30,
+              width:80,
+              decoration:BoxDecoration(
+                  color: appColors.orange,
+                  borderRadius: BorderRadius.all(Radius.circular(5))
+              ),child: Center(child: Text("Giriş Yap",style: TextStyle(color: appColors.white) ,)),),
+          ),
+        )
+      ],
+    );
+  }
   
   Widget getContainerForEasyAccess(Color color,Color colorGradient,String textBold, String textNormal, String icon){
     final appColors = AppColors();
     return Container(
-      height: 120,
-      width: 120,
+      height: 110,
+      width: 110,
       decoration: BoxDecoration(
         color: color,
         gradient: LinearGradient(
@@ -85,8 +243,8 @@ class _MyHomePageState extends State<HomePage> {
               textDirection: TextDirection.rtl,
               text: TextSpan(
                 children: <TextSpan>[
-                  TextSpan(text: textBold, style: const TextStyle(fontFamily: "FontBold",fontSize: 17)),
-                  TextSpan(text: textNormal,style: const TextStyle(fontFamily: "FontNormal",fontSize: 17)),
+                  TextSpan(text: textBold, style: const TextStyle(fontFamily: "FontBold",fontSize: 16)),
+                  TextSpan(text: textNormal,style: const TextStyle(fontFamily: "FontNormal",fontSize: 16)),
                 ],
               ),
             ),
@@ -95,8 +253,8 @@ class _MyHomePageState extends State<HomePage> {
             left: 4,
             bottom: 10,
             child: SizedBox(
-              width: 90,
-              height: 90,
+              width: 80,
+              height: 80,
               child: Image(
                 color: appColors.white.withOpacity(0.2),
                 image: AssetImage(

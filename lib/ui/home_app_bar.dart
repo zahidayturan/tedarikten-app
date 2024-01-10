@@ -2,6 +2,8 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:tedarikten/constants/app_colors.dart';
+import 'package:tedarikten/pages/profile_info_page.dart';
+import 'package:tedarikten/pages/sign_up_page.dart';
 
 class HomeAppBar extends StatelessWidget implements  PreferredSizeWidget{
 
@@ -18,7 +20,7 @@ class HomeAppBar extends StatelessWidget implements  PreferredSizeWidget{
             padding: const EdgeInsets.only(left: 10,right: 4),
             child: GestureDetector(
               onTap: () {
-
+                Scaffold.of(context).openDrawer();
               },
               child: Container(
                 width: 38,
@@ -104,7 +106,10 @@ class HomeAppBar extends StatelessWidget implements  PreferredSizeWidget{
             padding: const EdgeInsets.only(left: 4,right: 10),
             child: GestureDetector(
               onTap: () {
-
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => ProfilePage()),
+                );
               },
               child: Container(
                 width: 38,

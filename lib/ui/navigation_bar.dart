@@ -64,7 +64,7 @@ class _CustomBottomNavigationBar extends ConsumerState<CustomBottomNavigationBar
             const SizedBox(height: 8,),
             AnimatedContainer(
               duration: Duration(milliseconds: 300),
-              width: 24,
+              width: 28 ,
               height: check == true ? 8 : 0,
               decoration: BoxDecoration(
               color: appColors.blue,
@@ -79,8 +79,8 @@ class _CustomBottomNavigationBar extends ConsumerState<CustomBottomNavigationBar
         Padding(
           padding: const EdgeInsets.symmetric(vertical: 5),
           child: SizedBox(
-            width: 30,
-            height: 30,
+            width: 26,
+            height: 26,
             child: Image(
               color: check == true ? appColors.blue : appColors.blackLight,
               image: AssetImage(
