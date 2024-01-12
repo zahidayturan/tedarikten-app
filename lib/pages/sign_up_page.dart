@@ -8,7 +8,8 @@ import 'package:tedarikten/constants/app_colors.dart';
 import 'package:tedarikten/pages/login_page.dart';
 
 class SignUpPage extends StatelessWidget {
-  final TextEditingController usernameController = TextEditingController();
+  final TextEditingController nameController = TextEditingController();
+  final TextEditingController surnameController = TextEditingController();
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
 
@@ -37,7 +38,9 @@ class SignUpPage extends StatelessWidget {
                         color: appColors.blueDark,
                         height: 1),),
                 ),
-                getTextField(context, usernameController, "Kullanıcı Adı"),
+                getTextField(context, nameController, "Ad"),
+                SizedBox(height: 16.0),
+                getTextField(context, surnameController, "Soyad"),
                 SizedBox(height: 16.0),
                 getTextField(context, emailController, "E-posta"),
                 SizedBox(height: 16.0),
@@ -173,8 +176,9 @@ class SignUpPage extends StatelessWidget {
       );
 
       await FirebaseFirestore.instance.collection('users').doc(userCredential.user?.uid).set({
-        'name': "Mehmet",
-        'surname': "Yılmaz",
+        'id' : userCredential!.user!.uid,
+        'name':  nameController.text,
+        'surname': surnameController.text,
       });
 
     } catch (e) {

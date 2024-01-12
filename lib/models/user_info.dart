@@ -1,23 +1,34 @@
-class UserInfo {
-  String? id;
+  /*
+    String? id;
   String? name;
   String? surname;
+  String? email;
+  String? city;
+  String? country;
+  String? profession;
+  bool? isVerified;
+  List? followList;
+  List? followersList;
+  List? advertList;
+  List? companyList;
+   */
 
-  UserInfo({
-    this.id = "",
+class TUserInfo {
+  String id;
+  String name;
+  String surname;
+
+  TUserInfo({
+    required this.id,
     required this.name,
     required this.surname,
   });
 
-  Map<String, dynamic> toJson() => {
-    "id": id,
-    "name": name,
-    "surname": surname,
-  };
-
-  static UserInfo fromJson(Map<String, dynamic> json) => UserInfo(
-    id: json["id"],
-    name: json["name"],
-    surname: json["surname"],
-  );
+  factory TUserInfo.fromJson(Map<String, dynamic> json) {
+    return TUserInfo(
+      id: json['id'] ?? '',
+      name: json['name'] ?? '',
+      surname: json['surname'] ?? '',
+    );
+  }
 }

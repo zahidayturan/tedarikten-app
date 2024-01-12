@@ -1,8 +1,10 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:tedarikten/pages/home_page.dart';
 import 'package:tedarikten/pages/introductions_page.dart';
 import 'package:tedarikten/riverpod_management.dart';
+import 'package:tedarikten/utils/firestore_helper.dart';
 
 
 class MyAppBase extends ConsumerStatefulWidget {
@@ -14,6 +16,21 @@ class MyAppBase extends ConsumerStatefulWidget {
 }
 
 class _MyAppBase extends ConsumerState<MyAppBase> {
+
+  void loadData()  async {
+    User? user = FirebaseAuth.instance.currentUser;
+    if(user != null){
+      await FirestoreService().getUserInfo(user!.uid).then((value) {
+        ref.read(firebaseControllerRiverpod).fetchUser(value!);
+      });
+    }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    loadData();
+  }
 
   @override
   Widget build(BuildContext context) {

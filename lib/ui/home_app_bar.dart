@@ -2,7 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:tedarikten/constants/app_colors.dart';
-import 'package:tedarikten/pages/profile_info_page.dart';
+import 'package:tedarikten/pages/profileInfoPage/profile_info_page.dart';
 import 'package:tedarikten/pages/sign_up_page.dart';
 
 class HomeAppBar extends StatelessWidget implements  PreferredSizeWidget{

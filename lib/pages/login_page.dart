@@ -1,12 +1,24 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:tedarikten/app/my_app.dart';
 import 'package:tedarikten/constants/app_colors.dart';
 import 'package:tedarikten/pages/sign_up_page.dart';
+import 'package:tedarikten/utils/firestore_helper.dart';
 
-class LoginPage extends StatelessWidget {
+import '../riverpod_management.dart';
+
+class LoginPage extends ConsumerStatefulWidget {
+  const LoginPage({Key? key}) : super(key: key);
+
+  @override
+  ConsumerState<LoginPage> createState() => _LoginPageState();
+}
+
+
+class _LoginPageState extends ConsumerState<LoginPage> {
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
 
@@ -45,7 +57,7 @@ class LoginPage extends StatelessWidget {
                     children: [
                       GestureDetector(
                         onTap: () async{
-                          await signInWithEmailAndPassword(context);
+                          await signInWithEmailAndPassword(context,ref);
                         },
                         child: Container(
                           decoration: BoxDecoration(
@@ -156,7 +168,7 @@ class LoginPage extends StatelessWidget {
 
   }
 
-  Future<void> signInWithEmailAndPassword(BuildContext context) async {
+  Future<void> signInWithEmailAndPassword(BuildContext context,WidgetRef ref) async {
     try {
       await FirebaseAuth.instance.signInWithEmailAndPassword(
         email: emailController.text,
@@ -169,6 +181,10 @@ class LoginPage extends StatelessWidget {
       final bool showApp = prefs.getBool("showApp") ?? false;
       print(tempBool);
       if (tempBool == false) {
+        User? user = FirebaseAuth.instance.currentUser;
+        await FirestoreService().getUserInfo(user!.uid).then((value) {
+          ref.read(firebaseControllerRiverpod).fetchUser(value!);
+        });
         Navigator.push(
           context,
           MaterialPageRoute(builder: (context) => MyAppBase(showApp: showApp)),

@@ -3,10 +3,12 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:tedarikten/constants/app_colors.dart';
+import 'package:tedarikten/models/user_info.dart';
 import 'package:tedarikten/pages/addAdvertPage/be_supplier.dart';
 import 'package:tedarikten/pages/addAdvertPage/find_supply.dart';
 import 'package:tedarikten/pages/login_page.dart';
 import 'package:tedarikten/riverpod_management.dart';
+import 'package:tedarikten/utils/firestore_helper.dart';
 
 class AddAdvertPage extends ConsumerStatefulWidget {
   const AddAdvertPage({Key? key}) : super(key: key);
@@ -16,15 +18,31 @@ class AddAdvertPage extends ConsumerStatefulWidget {
 }
 
 class _AddAdvertPageState extends ConsumerState<AddAdvertPage> {
-
-  @override
-  void initState() {
-    super.initState();
-  }
   User? user = FirebaseAuth.instance.currentUser;
+  FirestoreService firestoreService = FirestoreService();
+  late TUserInfo? userData;
+  @override
+  void initState(){
+    super.initState();
+    if(user != null){
+      getUser();
+    }
+  }
 
+  void getUser() async {
+    userData = ref.read(firebaseControllerRiverpod).getUser();
+    if (userData != null) {
+      print('User Info - ID: ${userData!.id}, Name: ${userData!.name}, Surname: ${userData!.surname}');
+    } else {
+      print('User not found');
+    }
+  }
+  final PageController _pageViewController = PageController();
   Widget build(BuildContext context) {
     var readNavBar = ref.read(customNavBarRiverpod);
+    var read = ref.read(addAdvertPageRiverpod);
+    int switchIndex = read.switchCurrentIndex;
+    var size = MediaQuery.of(context).size;
     return WillPopScope(
       onWillPop: () async {
         readNavBar.setCurrentIndex(0);
@@ -32,70 +50,66 @@ class _AddAdvertPageState extends ConsumerState<AddAdvertPage> {
       },
       child: SafeArea(
         child: Scaffold(
-          body: Column(
-            children: [
-              topWidget(user)
-            ],
+          body: SingleChildScrollView(
+            physics: BouncingScrollPhysics(),
+            child: Column(
+              children: [
+                topWidget(user),
+                Padding(
+                  padding: EdgeInsets.all(10),
+                  child: Container(
+                    height: size.height-320,
+                    width: size.width,
+                    child: PageView(
+                        physics: BouncingScrollPhysics(),
+                        controller: _pageViewController,
+                        onPageChanged: (value) {
+                          read.setswitchCurrentIndex(value);
+                          setState(() {
+                          });
+                        },
+                        children: [
+                          FindSupply(),
+                          BeSupplier()
+                        ]),
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
     );
   }
 
-  PageController _pageViewController = PageController();
+
 
   Widget topWidget(User? user){
     final appColors = AppColors();
-    var read = ref.read(addAdvertPageRiverpod);
-    int switchIndex = read.switchCurrentIndex;
-    var size = MediaQuery.of(context).size;
-    return Column(
-      children: [
-        SizedBox(
-          height: 230,
-          child: Stack(
-            children: [
-              Container(
-                height: 200,
-                decoration: BoxDecoration(
-                    color: appColors.orange
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.all(10.0),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    pageTopController(),
-                    userInfo(user),
-                    changeMenuButton(),
-                  ],
-                ),
-              ),
-
-            ],
-          ),),
-        Padding(
-          padding: EdgeInsets.all(10),
-          child: SizedBox(
-            height: size.height-400,
-            width: size.width,
-            child: PageView(
-                physics: BouncingScrollPhysics(),
-                controller: _pageViewController,
-                onPageChanged: (value) {
-                  read.setswitchCurrentIndex(value);
-                  setState(() {
-                  });
-                },
-                children: [
-                FindSupply(),
-                BeSupplier()
-            ]),
+    return SizedBox(
+      height: 230,
+      child: Stack(
+        children: [
+          Container(
+            height: 200,
+            decoration: BoxDecoration(
+                color: appColors.orange
+            ),
           ),
-        ),
-      ],
-    );
+          Padding(
+            padding: const EdgeInsets.all(10.0),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                pageTopController(),
+                userInfo(user),
+                changeMenuButton(),
+              ],
+            ),
+          ),
+
+        ],
+      ),);
   }
   Widget pageTopController(){
     final appColors = AppColors();
@@ -147,66 +161,10 @@ class _AddAdvertPageState extends ConsumerState<AddAdvertPage> {
   Widget userInfo(User? user){
     final appColors = AppColors();
     var size = MediaQuery.of(context).size;
-    return Container(
-      height: 110,
-      width: size.width,
-      decoration: BoxDecoration(
-        color: appColors.white,
-        borderRadius: BorderRadius.all(Radius.circular(5))
-      ),
-      child: user != null ?
-      FutureBuilder(
-        future: FirebaseFirestore.instance.collection('users').doc(user.uid).get(),
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return CircularProgressIndicator();
-          } else if (snapshot.hasError) {
-            return Text("Hata: ${snapshot.error}");
-          } else if (!snapshot.hasData || !snapshot.data!.exists) {
-            return Text("Kullanıcı bulunamadı");
-          }else {
-            Map<String, dynamic> userData = snapshot.data!.data() as Map<String, dynamic>;
-
-            String name = userData['name'];
-            String surname = userData['surname'];
-            return Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Row(
-                children: [
-                  Container(
-                    width: 80,
-                    height: 80,
-                    decoration: BoxDecoration(
-                        color: appColors.blackLight,
-                        shape: BoxShape.circle
-                    ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 8),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text("${name} ${surname}",style: TextStyle(color: appColors.blackLight,fontFamily: "FontBold"),),
-                        Text("${user!.email}",style: TextStyle(color: appColors.blackLight),),
-                      ],
-                    ),
-                  ),
-                  Spacer(),
-                  RotatedBox(
-                      quarterTurns: 3,
-                      child: Text("Seçil Profil",style: TextStyle(color: appColors.orange),))
-                ],
-              ),
-            );
-          }
-        },
-      ) :
-      Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        crossAxisAlignment: CrossAxisAlignment.center,
+    if(user == null){
+      return Column(
         children: [
-          Text("Henüz giriş yapmadınız.\nİlan oluşturmak için giriş yapın",style: TextStyle(color: appColors.blackLight,height: 1,fontSize: 16),textAlign: TextAlign.center,),
+          Text("Henüz giriş yapmadınız",style: TextStyle(color: appColors.white,fontSize: 16),),
           Padding(
             padding: const EdgeInsets.all(8.0),
             child: GestureDetector(
@@ -220,14 +178,82 @@ class _AddAdvertPageState extends ConsumerState<AddAdvertPage> {
                 height: 30,
                 width:80,
                 decoration:BoxDecoration(
-                    color: appColors.orange,
+                    color: appColors.white,
                     borderRadius: BorderRadius.all(Radius.circular(5))
-                ),child: Center(child: Text("Giriş Yap",style: TextStyle(color: appColors.white) ,)),),
+                ),child: Center(child: Text("Giriş Yap",style: TextStyle(color: appColors.blue) ,)),),
+            ),
+          )
+        ],
+      );
+    }
+    else if(userData == null){
+      return Container(
+        height: 110,
+        width: size.width,
+        decoration: BoxDecoration(
+            color: appColors.white,
+            borderRadius: BorderRadius.all(Radius.circular(5))
+        ),
+        child: Center(
+          child: RichText(
+            textAlign: TextAlign.center,
+            text: TextSpan(
+              style: TextStyle(
+                  fontSize: 15,
+                  height: 1,
+                  color: appColors.blackLight
+              ),
+              children: <TextSpan>[
+                TextSpan(text: 'Profil bilgileri', style: TextStyle(fontFamily: "FontNormal")),
+                TextSpan(text: ' yükleniyor ',style: TextStyle(fontFamily: "FontBold")),
+              ],
             ),
           ),
-        ],
-      ),
-    );
+        ),
+      );
+    }else if(user != null){
+      return Container(
+        height: 110,
+        width: size.width,
+        decoration: BoxDecoration(
+            color: appColors.white,
+            borderRadius: BorderRadius.all(Radius.circular(5))
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: Row(
+            children: [
+              Container(
+                width: 80,
+                height: 80,
+                decoration: BoxDecoration(
+                    color: appColors.blackLight,
+                    shape: BoxShape.circle
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 8),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text("${userData!.name} ${userData!.surname}",style: TextStyle(color: appColors.blackLight,fontFamily: "FontBold"),),
+                    Text("${user!.email}",style: TextStyle(color: appColors.blackLight),),
+                  ],
+                ),
+              ),
+              Spacer(),
+              RotatedBox(
+                  quarterTurns: 3,
+                  child: Text("Seçil Profil",style: TextStyle(color: appColors.orange),))
+            ],
+          ),
+        ),
+      );
+    }
+    else{
+      return Center(child: Text("Bir sorun oluştu",style:  TextStyle(color: appColors.blueDark),));
+    }
   }
 
   Widget changeMenuButton(){
