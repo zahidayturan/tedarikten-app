@@ -3,6 +3,12 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:tedarikten/constants/app_colors.dart';
+import 'package:tedarikten/models/company_info.dart';
+import 'package:tedarikten/models/supply_info.dart';
+import 'package:tedarikten/pages/profileInfoPage/combined_info.dart';
+import 'package:tedarikten/riverpod_management.dart';
+import 'package:intl/intl.dart';
+import 'package:tedarikten/utils/firestore_helper.dart';
 
 class MyPosts extends ConsumerStatefulWidget {
   const MyPosts({Key? key}) : super(key: key);
@@ -12,71 +18,22 @@ class MyPosts extends ConsumerStatefulWidget {
 }
 
 class _MyPostsState extends ConsumerState<MyPosts> {
-  @override
-  late List<Map<String, dynamic>> userDataList = [];
-
-
   User? user = FirebaseAuth.instance.currentUser;
+  late List<CombinedInfo> userDataList = [];
   @override
   void initState() {
     super.initState();
     if(user != null){
-      fetchUserDataFromFirestore(FirebaseAuth.instance.currentUser!.uid);
+
     }
   }
 
-  Future<void> fetchUserDataFromFirestore(String userId) async {
-    userDataList.clear();
 
-    try {
-      var querySnapshot = await FirebaseFirestore.instance
-          .collection('supplies')
-          .where('userId', isEqualTo: userId)
-          .get();
 
-      List<QueryDocumentSnapshot> documents = querySnapshot.docs;
-      for (var document in documents) {
-        Map<String, dynamic> data = {
-          'typeSupply': document['typeSupply'],
-          'nameSupply': document['nameSupply'],
-        };
-
-        userDataList.add(data);
-      }
-    } catch (e) {
-      print('Veri çekme hatası: $e');
-    }
-
-    setState(() {});
-  }
 
   Widget build(BuildContext context) {
     final appColors = AppColors();
-    if(user != null && userDataList.isNotEmpty){
-      return ListView.builder(
-        itemCount: userDataList.length,
-        itemBuilder: (context, index) {
-          return getPostContainer(userDataList[index]); },
-      );
-    }else if(userDataList.isEmpty){
-      return Center(
-        child: RichText(
-          textAlign: TextAlign.center,
-          text: TextSpan(
-            style: TextStyle(
-              fontSize: 15,
-              height: 1,
-              color: appColors.blueDark
-            ),
-            children: <TextSpan>[
-              TextSpan(text: 'Henüz', style: TextStyle(fontFamily: "FontNormal")),
-              TextSpan(text: ' paylaşımınız ',style: TextStyle(fontFamily: "FontBold")),
-              TextSpan(text: 'yok',style: TextStyle(fontFamily: "FontNormal")),
-            ],
-          ),
-        ),
-      );
-    } else if(userDataList == null) {
+    if(user == null) {
       return Center(
         child: RichText(
           textAlign: TextAlign.center,
@@ -89,15 +46,92 @@ class _MyPostsState extends ConsumerState<MyPosts> {
         ),
       );
     }else{
-      return Center(child: Text("Bir sorun oluştu",style:  TextStyle(color: appColors.blueDark),));
+      return FutureBuilder<List<CombinedInfo>>(
+        future: FirestoreService().getSupplyDataFromFirestore(user!.uid),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return Container(
+              height: 40,
+                width: 40,
+                child: Center(child: CircularProgressIndicator(color: appColors.blueDark,)));
+          } else if (snapshot.hasError) {
+            return Center(child: Text("Bir sorun oluştu",style:  TextStyle(color: appColors.blueDark),));
+          }else{
+            List<CombinedInfo>? supplyDataList = snapshot.data;
+            print(supplyDataList![0].userInfo.name);
+            if(supplyDataList!.isEmpty){
+              return Center(
+                child: RichText(
+                  textAlign: TextAlign.center,
+                  text: TextSpan(
+                    style: TextStyle(
+                        fontSize: 15,
+                        height: 1,
+                        color: appColors.blueDark
+                    ),
+                    children: <TextSpan>[
+                      TextSpan(text: 'Henüz', style: TextStyle(fontFamily: "FontNormal")),
+                      TextSpan(text: ' paylaşımınız ',style: TextStyle(fontFamily: "FontBold")),
+                      TextSpan(text: 'yok',style: TextStyle(fontFamily: "FontNormal")),
+                    ],
+                  ),
+                ),
+              );
+            }else{
+              return ListView.builder(
+                physics: BouncingScrollPhysics(),
+                itemCount: supplyDataList.length,
+                itemBuilder: (context, index) {
+                  return getPostContainer(supplyDataList[index]); },
+              );
+            }
+          }
+        },
+      );
     }
+
   }
 
-  Widget getPostContainer(Map<String, dynamic> data) {
+  Widget getPostContainer(CombinedInfo data) {
+    print(data.userInfo);
     final appColors = AppColors();
 
+    String name = ref.read(firebaseControllerRiverpod).getUser()?.name ?? "Kullanıcı";
+
+    String postInfo = data.supplyInfo.userId == user!.uid ? "${name} bir ilan paylaştı" : "${name} bir ilanı yeniden paylaştı";
+
+    String dataStatus = data.supplyInfo.status != "" ? "${data.supplyInfo.status.split(" ")[0]}\n${data.supplyInfo.status.split(" ")[1]}" : "Tedarik\nPaylaşımı";
+
+    DateTime sharingDateTime =  DateTime.parse(data.supplyInfo.sharingDate);
+    String sharingDate = DateFormat('dd.MM.yyyy').format(sharingDateTime);
+    String sharingTime = DateFormat('HH:mm').format(sharingDateTime);
+
+    String getCompleteStatus(){
+      if(data.supplyInfo.dateLast != "" && data.supplyInfo.dateFirst != ""){
+        DateTime sharingDateTime = DateTime.parse(data.supplyInfo.dateLast);
+        if(sharingDateTime.isBefore(DateTime.now())){
+          return "Tamamlanmış\nİlan";
+        }
+        else{
+          return "Aktif\nİlan";
+        }
+      }else{
+        return "";
+      }
+    }
+
+    Color getStatusColor(){
+      if(data.supplyInfo.status == "Tedarikçi Arıyor"){
+        return appColors.pink;
+      } else if(data.supplyInfo.status == "Tedarik Arıyor"){
+        return appColors.orange;
+      } else{
+        return appColors.blueDark;
+      }
+    }
+
     return Container(
-      margin: EdgeInsets.all(8.0),
+      margin: EdgeInsets.symmetric(vertical: 8),
       padding: EdgeInsets.all(8.0),
       decoration: BoxDecoration(
         color: appColors.white,
@@ -105,11 +139,121 @@ class _MyPostsState extends ConsumerState<MyPosts> {
       ),
       child: Column(
         children: [
-          Text('${data['typeSupply']}'),
-          Text('${data['nameSupply']}'),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              getText(postInfo, 11, "FontNormal", appColors.blue,TextAlign.start),
+              Container(height: 16,width: 36,
+              padding: EdgeInsets.symmetric(horizontal: 6),
+              decoration: BoxDecoration(
+                color: getStatusColor(),
+                borderRadius: BorderRadius.all(Radius.circular(10))
+              ),
+              child: Image(color:appColors.white,fit: BoxFit.fitWidth,image: AssetImage("assets/icons/dots.png")),)
+            ],
+          ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  getText(data.supplyInfo.type, 17, "FontBold", appColors.black,TextAlign.start),
+                  getText("${data.userInfo.name} ${data.userInfo.surname}", 14, "FontNormal", appColors.blackLight,TextAlign.start)
+                ],
+              ),
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 6),
+                child: Row(
+                  children: [
+                    getText(dataStatus, 13, "FontNormal", appColors.black,TextAlign.right),
+                    Container(
+                      margin: EdgeInsets.only(left: 4),
+                      height: 40,
+                      width: 8,
+                      decoration: BoxDecoration(
+                        color: getStatusColor(),
+                        borderRadius: BorderRadius.only(topLeft: Radius.circular(8),bottomLeft: Radius.circular(8))
+                      ),
+                    )
+                  ],
+                ),
+              )
+            ],
+          ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    margin: EdgeInsets.only(right: 4),
+                    height: 40,
+                    width: 8,
+                    decoration: BoxDecoration(
+                        color: appColors.blueDark,
+                        borderRadius: BorderRadius.only(topRight: Radius.circular(8),bottomRight: Radius.circular(8))
+                    ),
+                  ),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      getText(data.companyInfo.name, 14, "FontNormal", appColors.black,TextAlign.start),
+                      getText(data.supplyInfo.name, 13, "FontNormal", appColors.black,TextAlign.start),
+                    ],
+                  ),
+                ],
+              ),
+              getText(getCompleteStatus(), 13, "FontNormal", appColors.blueDark,TextAlign.right),
+            ],
+          ),
+          Padding(
+            padding: const EdgeInsets.only(top: 6.0),
+            child: Row(
+              children: [
+                getText(sharingDate, 12, "FontNormal", appColors.black, TextAlign.start),
+                Padding(
+                  padding: const EdgeInsets.only(left: 8),
+                  child: getText(sharingTime, 12, "FontNormal", appColors.black, TextAlign.start),
+                ),
+                Spacer(),
+                Container(
+                  height: 20,
+                  decoration: BoxDecoration(
+                    color: appColors.blueDark,
+                    borderRadius: BorderRadius.all(Radius.circular(5))
+                  ),
+                  child: Center(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 4),
+                      child: Row(
+                        children: [
+                          getText("Detayları görüntüle", 12, "FontNormal", appColors.white, TextAlign.center),
+                          Icon(Icons.arrow_forward_ios_rounded,color: appColors.white,size: 11,)
+                        ],
+                      ),
+                    ),
+                  ),
+                )
+              ],
+            ),
+          )
+
         ],
       ),
     );
+  }
+  
+  Widget getText(String text, double size, String family, Color textColor, TextAlign align){
+    return Text(text,
+      textAlign: align,
+      overflow: TextOverflow.ellipsis,
+      style: TextStyle(
+      color: textColor,
+      height: 1,
+      fontSize: size,
+      fontFamily: family
+    ),);
   }
 }
 

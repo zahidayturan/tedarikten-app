@@ -4,7 +4,7 @@ import 'package:tedarikten/models/user_info.dart';
 
 
 class FirebaseControllerRiverpod extends ChangeNotifier {
-
+  bool isuseSet = false;
   User? user = FirebaseAuth.instance.currentUser;
   TUserInfo? userInfo;
 
@@ -14,6 +14,11 @@ class FirebaseControllerRiverpod extends ChangeNotifier {
   }
   TUserInfo? getUser(){
     return userInfo;
+  }
+
+  void setisuseinsert(){
+    isuseSet = !isuseSet;
+    notifyListeners();
   }
 
 }

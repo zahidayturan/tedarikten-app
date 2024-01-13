@@ -6,6 +6,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:tedarikten/constants/app_colors.dart';
+import 'package:tedarikten/models/company_info.dart';
+import 'package:tedarikten/models/supply_info.dart';
+import 'package:tedarikten/riverpod_management.dart';
 import 'package:tedarikten/utils/firestore_helper.dart';
 
 class FindSupply extends ConsumerStatefulWidget {
@@ -25,9 +28,65 @@ class _FindSupplyState extends ConsumerState<FindSupply> {
     typeSupplyController.text = typeSupplySelect;
     locationSupplyController.text = locationSupplySelect;
     locationCompanySupplyController.text = locationCompanySupplySelect;
-
+    selectedDateLast = selectedDateLast.add(Duration(days: 21));
   }
+  final _nameSupplyKey = GlobalKey<FormState>();
+  final _companyNameSupplyKey = GlobalKey<FormState>();
+  final _companyPhoneSupplyKey = GlobalKey<FormState>();
+  final _companyPersonNameSurnameSupplyKey = GlobalKey<FormState>();
+  final _companyPersonEmailSupplyKey = GlobalKey<FormState>();
+
+  final _removedKey1 = GlobalKey<FormState>();
+  final _removedKey2  = GlobalKey<FormState>();
+  final _removedKey3  = GlobalKey<FormState>();
+  final _removedKey4  = GlobalKey<FormState>();
+  final _removedKey5  = GlobalKey<FormState>();
+
+
+  final TextEditingController nameSupplyController = TextEditingController();
+  final TextEditingController descriptionSupplyController = TextEditingController();
+  final TextEditingController amountSupplyController = TextEditingController();
+  final TextEditingController minDeliveryTimeSupplyController = TextEditingController();
+  final TextEditingController companyNameSupplyController = TextEditingController();
+  final TextEditingController companyYearSupplyController = TextEditingController();
+  final TextEditingController companyPhoneSupplyController = TextEditingController();
+  final TextEditingController companyAddressSupplyController = TextEditingController();
+  final TextEditingController companyPersonNameSurnameSupplyController = TextEditingController();
+  final TextEditingController companyPersonEmailSupplyController = TextEditingController();
+  DateTime selectedDateFirst = DateTime.now();
+  DateTime selectedDateLast = DateTime.now();
+  TimeOfDay selectedTimeFirst = TimeOfDay.now();
+  TimeOfDay selectedTimeLast = TimeOfDay.now();
+  String typeSupplySelect = "Türü Seçin";
+  String locationSupplySelect = "Şehir Seçin";
+  String locationCompanySupplySelect = "Şehir Seçin";
+  TextEditingController typeSupplyController = TextEditingController();
+  TextEditingController locationSupplyController = TextEditingController();
+  TextEditingController locationCompanySupplyController = TextEditingController() ;
+
   User? user = FirebaseAuth.instance.currentUser;
+
+  void clearAll(){
+    nameSupplyController.clear();
+    descriptionSupplyController.clear();
+    amountSupplyController.clear();
+    minDeliveryTimeSupplyController.clear();
+    companyNameSupplyController.clear();
+    companyYearSupplyController.clear();
+    companyPhoneSupplyController.clear();
+    companyPersonEmailSupplyController.clear();
+    companyAddressSupplyController.clear();
+    companyPersonNameSurnameSupplyController.clear();
+    typeSupplyController.text = typeSupplySelect;
+    locationSupplyController.text = locationSupplySelect;
+    locationCompanySupplyController.text = locationCompanySupplySelect;
+    selectedDateFirst = DateTime.now();
+    selectedDateLast = DateTime.now();
+    selectedDateLast = selectedDateLast.add(Duration(days: 21));
+    selectedTimeFirst = TimeOfDay.now();
+    selectedTimeLast = TimeOfDay.now();
+  }
+
   Widget build(BuildContext context) {
     var size = MediaQuery.of(context).size;
     final appColors = AppColors();
@@ -44,9 +103,9 @@ class _FindSupplyState extends ConsumerState<FindSupply> {
                 SizedBox(height: 8,),
                 getSectionContainerWithRow(true,"Tedarik Türü",getDropDownMenu(typeSupplyList,typeSupplyController,"",appColors.blueDark)),
                 SizedBox(height: 8,),
-                getSectionContainerWithRow(true,"Tedarik\nÜrün Adı",getTextFormField(0,0,54,nameSupplyController,"Ürün adını yazınız",108,2,appColors.blueDark,"")),
+                getSectionContainerWithRow(true,"Tedarik\nAdı",getTextFormField(0,0,54,nameSupplyController,"Ürün adını yazınız",108,2,appColors.blueDark,"",_nameSupplyKey)),
                 SizedBox(height: 8,),
-                getSectionContainerWithRow(false,"Tedarik\nAçıklaması",getTextFormField(0,0,54,descriptionSupplyController,"Açıklama metnini yazınız",256,2,appColors.blueDark,"")),
+                getSectionContainerWithRow(false,"Tedarik\nAçıklaması",getTextFormField(0,0,54,descriptionSupplyController,"Açıklama metnini yazınız",256,2,appColors.blueDark,"",_removedKey1)),
                 SizedBox(height: 8,),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -64,16 +123,16 @@ class _FindSupplyState extends ConsumerState<FindSupply> {
                   ],
                 ),
                 SizedBox(height: 8,),
-                getSectionContainerWithRow(false,"Tedarik Miktarı",getTextFormField(1,124,28,amountSupplyController,"Miktar Girin",12,1,appColors.white,"")),
+                getSectionContainerWithRow(false,"Tedarik Miktarı",getTextFormField(1,124,28,amountSupplyController,"Miktar Girin",12,1,appColors.white,"",_removedKey2)),
                 SizedBox(height: 8,),
-                getSectionContainerWithRow(false,"Minimum Teslim Süresi",getTextFormField(1,60,28,minDeliveryTimeSupplyController,"Girin",4,1,appColors.white,"Gün")),
+                getSectionContainerWithRow(false,"Minimum Teslim Süresi",getTextFormField(1,60,28,minDeliveryTimeSupplyController,"Girin",4,1,appColors.white,"Gün",_removedKey3)),
                 SizedBox(height: 8,),
                 getSectionContainerWithRow(false,"Konumu",getDropDownMenu(getTurkishCitiesList,locationSupplyController," /Türkiye",appColors.blueDark)),
 
                 SizedBox(height: 16,),
                 getSectionText("Firma Bilgileri", appColors.blueLight),
                 SizedBox(height: 8,),
-                getSectionContainerWithRow(true,"Firma\nAdı",getTextFormField(0,0,54,companyNameSupplyController,"Firma adını yazınız",108,2,appColors.blueLight,"")),
+                getSectionContainerWithRow(true,"Firma\nAdı",getTextFormField(0,0,54,companyNameSupplyController,"Firma adını yazınız",108,2,appColors.blueLight,"",_companyNameSupplyKey)),
                 SizedBox(height: 8,),
                 getSectionContainerWithRow(true,"Konumu",getDropDownMenu(getTurkishCitiesList,locationCompanySupplyController," /Türkiye",appColors.blueLight)),
                 SizedBox(height: 8,),
@@ -93,7 +152,7 @@ class _FindSupplyState extends ConsumerState<FindSupply> {
                           mainAxisAlignment: MainAxisAlignment.spaceAround,
                           children: [
                             Text("Kuruluş Yılı",style: TextStyle(color: appColors.black,height: 1,fontSize: 14),),
-                            getTextFormField(2,100,28,companyYearSupplyController,"Yıl yazınız",4,1,appColors.white,""),
+                            getTextFormField(2,100,28,companyYearSupplyController,"Yıl yazınız",4,1,appColors.white,"",_removedKey4),
                           ],
                         ),
                       ),
@@ -101,17 +160,16 @@ class _FindSupplyState extends ConsumerState<FindSupply> {
                     Expanded(
                         child: Padding(
                       padding: const EdgeInsets.only(left: 4),
-                      child: getSectionContainerWithRow(true,"İletişim\nNumarası",getTextFormField(0,0,54,companyPhoneSupplyController,"0*** *** ** **",14,1,appColors.blueLight,"")),
+                      child: getSectionContainerWithRow(true,"İletişim\nNumarası",getTextFormField(0,0,54,companyPhoneSupplyController,"0*** *** ** **",14,1,appColors.blueLight,"",_companyPhoneSupplyKey)),
                     )),
                   ],
                 ),
                 SizedBox(height: 8,),
-                getSectionContainerWithRow(false,"Adres\nBilgisi",getTextFormField(0,0,54,companyAddressSupplyController,"Adres metnini yazınız",108,2,appColors.blueLight,"")),
+                getSectionContainerWithRow(false,"Adres\nBilgisi",getTextFormField(0,0,54,companyAddressSupplyController,"Adres metnini yazınız",108,2,appColors.blueLight,"",_removedKey5)),
                 SizedBox(height: 8,),
-                getSectionContainerWithRow(true,"Firma Yetkilisi\nAdı Soyadı",getTextFormField(0,0,54,companyPersonNameSurnameSupplyController,"Bilgileri yazınız",24,2,appColors.blueLight,"")),
+                getSectionContainerWithRow(true,"Firma Yetkilisi\nAdı Soyadı",getTextFormField(0,0,54,companyPersonNameSurnameSupplyController,"Bilgileri yazınız",24,2,appColors.blueLight,"",_companyPersonNameSurnameSupplyKey)),
                 SizedBox(height: 8,),
-                getSectionContainerWithRow(true,"Firma Yetkilisi\ne-Posta Adresi",getTextFormField(0,0,54,companyPersonEmailSupplyController,"Mail adresini yazınız",108,2,appColors.blueLight,"")),
-
+                getSectionContainerWithRow(true,"Firma Yetkilisi\ne-Posta Adresi",getTextFormField(0,0,54,companyPersonEmailSupplyController,"Mail adresini yazınız",36,2,appColors.blueLight,"",_companyPersonEmailSupplyKey)),
                 SizedBox(height: 16,),
                 getSectionText("Ek Dosyalar", appColors.blue),
                 getSectionContainerWithRow(false, "Dosya Eklemek İçin Dokunun", SizedBox())
@@ -120,14 +178,13 @@ class _FindSupplyState extends ConsumerState<FindSupply> {
           ),
         ),
         Padding(
-          padding: const EdgeInsets.all(8.0),
+          padding: const EdgeInsets.only(top: 14),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
             GestureDetector(
               onTap: () {
-                nameSupplyController.clear();
-                descriptionSupplyController.clear();
+                clearAll();
                 setState(() {
 
                 });
@@ -135,7 +192,61 @@ class _FindSupplyState extends ConsumerState<FindSupply> {
            ),
             GestureDetector(
               onTap: () async{
-                await firestoreService.addAdvertToFirestore(user!.uid);
+                if(_nameSupplyKey.currentState!.validate()
+                    && _companyNameSupplyKey.currentState!.validate()
+                    && _companyPhoneSupplyKey.currentState!.validate()
+                    && _companyPersonNameSurnameSupplyKey.currentState!.validate()
+                    && _companyPersonEmailSupplyKey.currentState!.validate()
+                    && typeSupplyController.text != "Türü Seçin"
+                    && locationCompanySupplyController.text != "Şehir Seçin"
+                ){
+
+                  DateTime firstDate = DateTime(selectedDateFirst.year, selectedDateFirst.month, selectedDateFirst.day, selectedTimeFirst.hour, selectedTimeFirst.minute);
+
+                  DateTime lastDate = DateTime(selectedDateLast.year, selectedDateLast.month, selectedDateLast.day, selectedTimeLast.hour, selectedTimeLast.minute);
+
+                  String status = ref.read(addAdvertPageRiverpod).switchCurrentIndex == 0 ? "Tedarikçi Arıyor" : "Tedarik Arıyor";
+                  String sharingDate = DateTime.now().toString();
+                  String editingDate = "";
+                  showDialog(
+                    context: context,
+                    builder: (BuildContext context) {
+                      return Center(
+                        child: CircularProgressIndicator(
+                          color: appColors.blueLight,
+                        ),
+                      );
+                    },
+                    barrierDismissible: false, // Kullanıcının dışarı tıklamasını engeller
+                  );
+                  String companyId = await firestoreService.addCompanyToFirestore(CompanyInfo(name: companyNameSupplyController.text, location: locationCompanySupplyController.text, year: int.parse(companyYearSupplyController.text), phone: companyPhoneSupplyController.text, address: companyAddressSupplyController.text, personNameSurname: companyPersonNameSurnameSupplyController.text, personEmail: companyPersonEmailSupplyController.text, userId: user!.uid));
+
+
+                 await firestoreService.addAdvertToFirestore(SupplyInfo(type: typeSupplyController.text, name: nameSupplyController.text, description: descriptionSupplyController.text, dateFirst: firstDate.toString(), dateLast: lastDate.toString(), amount: int.parse(amountSupplyController.text), minTime: int.parse(minDeliveryTimeSupplyController.text), location: locationSupplyController.text, status: status,sharingDate: sharingDate,editingDate: editingDate,companyId: companyId, documentId: "0", sharersIdList: [],registrantsIdList: [],applicantsIdList: [],userId: user!.uid));
+                Navigator.pop(context);
+                  ref.read(customNavBarRiverpod).setCurrentIndex(0);
+                }else{
+                  String errorMessage = "Eksik bilgi verdiniz";
+                  if(typeSupplyController.text == "Türü Seçin"){
+                   errorMessage = "Tedarik türünü seçmediniz. Eksik bilgi verdiniz";
+                  }else if(locationCompanySupplyController.text == "Şehir Seçin"){
+                    errorMessage = "Firmanın konumunu seçmediniz. Eksik bilgi verdiniz";
+                  }else{
+                    errorMessage = "Eksik bilgi verdiniz. Zorunlu alanları giriniz. (*)";
+                  }
+                    ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                            behavior: SnackBarBehavior.floating,
+                            backgroundColor: appColors.blueDark,
+                            elevation: 0,
+                            content: Center(
+                              child: Text(
+                                errorMessage,
+                                textAlign: TextAlign.center,
+                                style: const TextStyle(fontSize: 16, height: 1),
+                              ),))
+                    );
+                }
               }, child: getButton("PAYLAŞ", appColors.orange, appColors.white,16))
           ],),
         )
@@ -153,6 +264,7 @@ class _FindSupplyState extends ConsumerState<FindSupply> {
       ),
     );
   }
+
   Widget getButton(String text,Color buttonColor,Color textColor,double fontSize){
 
     var size = MediaQuery.of(context).size;
@@ -162,7 +274,7 @@ class _FindSupplyState extends ConsumerState<FindSupply> {
         borderRadius: BorderRadius.all(Radius.circular(5))
       ),
       child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 6,horizontal: 12),
+        padding: const EdgeInsets.symmetric(vertical: 6,horizontal: 18),
         child: Text(text, style: TextStyle(color: textColor,fontSize: fontSize,fontFamily: "FontBold")),
       ),
     );
@@ -184,10 +296,6 @@ class _FindSupplyState extends ConsumerState<FindSupply> {
     );
   }
 
-  DateTime selectedDateFirst = DateTime.now();
-  DateTime selectedDateLast = DateTime.now();
-  TimeOfDay selectedTimeFirst = TimeOfDay.now();
-  TimeOfDay selectedTimeLast = TimeOfDay.now();
   Widget getDateSupply(BuildContext context,String selectedDateType){
 
       String getTextDateTime(){
@@ -318,22 +426,6 @@ class _FindSupplyState extends ConsumerState<FindSupply> {
     );
     }
 
-  List<String> typeSupplyList = [
-    'Türü Seçin',
-    'Ürün Tedariği',
-    "Hizmet Tedariği",
-    "Lojistik Tedariği",
-    "Diğer Tedarik"
-  ];
-
-
-  String typeSupplySelect = "Türü Seçin";
-  String locationSupplySelect = "Şehir Seçin";
-  String locationCompanySupplySelect = "Şehir Seçin";
-  TextEditingController typeSupplyController = TextEditingController();
-  TextEditingController locationSupplyController = TextEditingController();
-  TextEditingController locationCompanySupplyController = TextEditingController() ;
-
   Widget getDropDownMenu(List<String> list,TextEditingController controller,String helperText, Color color) {
     final appColors = AppColors();
     return Row(
@@ -395,41 +487,38 @@ class _FindSupplyState extends ConsumerState<FindSupply> {
     );
   }
 
-  final TextEditingController nameSupplyController = TextEditingController();
-  final TextEditingController descriptionSupplyController = TextEditingController();
-  final TextEditingController amountSupplyController = TextEditingController();
-  final TextEditingController minDeliveryTimeSupplyController = TextEditingController();
-  final TextEditingController companyNameSupplyController = TextEditingController();
-  final TextEditingController companyYearSupplyController = TextEditingController();
-  final TextEditingController companyPhoneSupplyController = TextEditingController();
-  final TextEditingController companyAddressSupplyController = TextEditingController();
-  final TextEditingController companyPersonNameSurnameSupplyController = TextEditingController();
-  final TextEditingController companyPersonEmailSupplyController = TextEditingController();
-
-  Widget getTextFormField(int formType,double width,double height,TextEditingController? controller,String hintText,int maxLength, int maxLines,Color textColor,String helperText){
+  Widget getTextFormField(int formType,double width,double height,TextEditingController? controller,String hintText,int maxLength, int maxLines,Color textColor,String helperText,Key key){
     if(formType == 0){
       return Expanded(
         child: Container(
           height: height,
-          child: TextFormField(
-            maxLines: maxLines,
-            maxLength: maxLength,
-            controller: controller,
-            style: TextStyle(color: textColor),
-            keyboardType: TextInputType.text,
-            textAlign: TextAlign.right,
-            decoration: InputDecoration(
-                hintText: hintText,
-                hintStyle: TextStyle(
+          child: Form(
+            key: key,
+            child: TextFormField(
+              maxLines: maxLines,
+              maxLength: maxLength,
+              controller: controller,
+              validator: (value) {
+                if (value!.isEmpty) {
+                  return 'Boş bırakılamaz';
+                }
+              },
+              style: TextStyle(color: textColor),
+              keyboardType: TextInputType.text,
+              textAlign: TextAlign.right,
+              decoration: InputDecoration(
+                  hintText: hintText,
+                  hintStyle: TextStyle(
+                      color: textColor,
+                      fontSize: 14,
+                      height: 1
+                  ),
+                  counterStyle: TextStyle(
                     color: textColor,
-                    fontSize: 14,
-                    height: 1
-                ),
-                counterStyle: TextStyle(
-                  color: textColor,
-                ),
-                contentPadding: EdgeInsets.zero,
-                border: InputBorder.none
+                  ),
+                  contentPadding: EdgeInsets.zero,
+                  border: InputBorder.none
+              ),
             ),
           ),
         ),
@@ -445,26 +534,34 @@ class _FindSupplyState extends ConsumerState<FindSupply> {
             color: appColors.blueDark,
             borderRadius: BorderRadius.all(Radius.circular(8))
           ),
-          child: TextFormField(
-            maxLines: maxLines,
-            maxLength: maxLength,
-            controller: controller,
-            style: TextStyle(color: textColor),
-            inputFormatters: <TextInputFormatter>[
-              FilteringTextInputFormatter.digitsOnly,
-            ],
-            keyboardType: TextInputType.number,
-            textAlign: TextAlign.center,
-            decoration: InputDecoration(
-              hintText: hintText,
-              hintStyle: TextStyle(
-                color: textColor,
-                fontSize: 14,
-                height: 1
+          child: Form(
+            key: key,
+            child: TextFormField(
+              maxLines: maxLines,
+              maxLength: maxLength,
+              controller: controller,
+              validator: (value) {
+                if (value!.isEmpty) {
+                  return 'Boş bırakılamaz';
+                }
+              },
+              style: TextStyle(color: textColor),
+              inputFormatters: <TextInputFormatter>[
+                FilteringTextInputFormatter.digitsOnly,
+              ],
+              keyboardType: TextInputType.number,
+              textAlign: TextAlign.center,
+              decoration: InputDecoration(
+                hintText: hintText,
+                hintStyle: TextStyle(
+                  color: textColor,
+                  fontSize: 14,
+                  height: 1
+                ),
+                counterText: "",
+                contentPadding: EdgeInsets.only(bottom: 16),
+                border: InputBorder.none
               ),
-              counterText: "",
-              contentPadding: EdgeInsets.only(bottom: 16),
-              border: InputBorder.none
             ),
           ),
         ),
@@ -490,26 +587,34 @@ class _FindSupplyState extends ConsumerState<FindSupply> {
                 color: appColors.blueLight,
                 borderRadius: BorderRadius.all(Radius.circular(8))
             ),
-            child: TextFormField(
-              maxLines: maxLines,
-              maxLength: maxLength,
-              controller: controller,
-              style: TextStyle(color: textColor),
-              inputFormatters: <TextInputFormatter>[
-                FilteringTextInputFormatter.digitsOnly,
-              ],
-              keyboardType: TextInputType.number,
-              textAlign: TextAlign.center,
-              decoration: InputDecoration(
-                  hintText: hintText,
-                  hintStyle: TextStyle(
-                      color: textColor,
-                      fontSize: 14,
-                      height: 1
-                  ),
-                  counterText: "",
-                  contentPadding: EdgeInsets.only(bottom: 16),
-                  border: InputBorder.none
+            child: Form(
+              key: key,
+              child: TextFormField(
+                maxLines: maxLines,
+                maxLength: maxLength,
+                controller: controller,
+                validator: (value) {
+                  if (value!.isEmpty) {
+                    return 'Boş bırakılamaz';
+                  }
+                },
+                style: TextStyle(color: textColor),
+                inputFormatters: <TextInputFormatter>[
+                  FilteringTextInputFormatter.digitsOnly,
+                ],
+                keyboardType: TextInputType.number,
+                textAlign: TextAlign.center,
+                decoration: InputDecoration(
+                    hintText: hintText,
+                    hintStyle: TextStyle(
+                        color: textColor,
+                        fontSize: 14,
+                        height: 1
+                    ),
+                    counterText: "",
+                    contentPadding: EdgeInsets.only(bottom: 16),
+                    border: InputBorder.none
+                ),
               ),
             ),
           ),
@@ -544,6 +649,14 @@ class _FindSupplyState extends ConsumerState<FindSupply> {
       ),
     );
   }
+
+  List<String> typeSupplyList = [
+    'Türü Seçin',
+    'Ürün Tedariği',
+    "Hizmet Tedariği",
+    "Lojistik Tedariği",
+    "Diğer Tedarik"
+  ];
 
   List<String> getTurkishCitiesList = [
     'Şehir Seçin',

@@ -1,5 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:tedarikten/models/company_info.dart';
+import 'package:tedarikten/models/supply_info.dart';
 import 'package:tedarikten/models/user_info.dart';
+import 'package:tedarikten/pages/profileInfoPage/combined_info.dart';
 
 class FirestoreService {
 
@@ -7,12 +10,14 @@ class FirestoreService {
 
   Future<TUserInfo?> getUserInfo(String uid) async {
     try {
-      DocumentSnapshot userSnapshot =
-      await _firestore.collection('users').doc(uid).get();
+      QuerySnapshot userSnapshot = await _firestore
+          .collection('users')
+          .where('id', isEqualTo: uid)
+          .get();
 
-      if (userSnapshot.exists) {
-        Map<String, dynamic> userData = userSnapshot.data() as Map<String, dynamic>;
-        return TUserInfo.fromJson(userData);
+      if (userSnapshot.size > 0) {
+        Map<String, dynamic>? userData = userSnapshot.docs.first.data() as Map<String, dynamic>?;
+        return userData != null ? TUserInfo.fromJson(userData) : null;
       } else {
         return null;
       }
@@ -22,17 +27,76 @@ class FirestoreService {
     }
   }
 
-  Future<void> addAdvertToFirestore(String uid) async {
+  Future<String> addCompanyToFirestore(CompanyInfo company) async {
     try {
-      await FirebaseFirestore.instance.collection('supplies').doc().set({
-        'userId' : uid,
-        'typeSupply': "Ürün Tedariği",
-        'nameSupply': "Çelik Malzeme",
-      });
+      Map<String, dynamic> companyData = company.toJson();
+      DocumentReference documentReference = await FirebaseFirestore.instance.collection('companies').add(companyData);
+      String documentId = documentReference.id;
+      return documentId;
+    } catch (e) {
+      print('Kayıt hatası: $e');
+      return "Hata";
+    }
+  }
+
+
+
+  Future<void> addAdvertToFirestore(SupplyInfo supply) async {
+    try {
+      Map<String, dynamic> supplyData = supply.toJson();
+      await FirebaseFirestore.instance.collection('supplies').add(supplyData);
     } catch (e) {
       print('Kayıt hatası: $e');
     }
   }
+
+  Future<List<CombinedInfo>> getSupplyDataFromFirestore(String userId) async {
+    late List<CombinedInfo> userDataList = [];
+    try {
+      var querySnapshotForSupplies = await FirebaseFirestore.instance
+          .collection('supplies')
+          .where('userId', isEqualTo: userId)
+          .get();
+
+      if (querySnapshotForSupplies.docs.isNotEmpty) {
+        List<DocumentSnapshot> documents = querySnapshotForSupplies.docs;
+        userDataList = await Future.wait(documents.map((doc) async {
+          Map<String, dynamic> supplyData = doc.data() as Map<String, dynamic>;
+
+
+          String companyId = supplyData['companyId'];
+
+          DocumentSnapshot companyDoc = await FirebaseFirestore.instance
+              .collection('companies')
+              .doc(companyId)
+              .get();
+          Map<String, dynamic> companyData = companyDoc.data() as Map<String, dynamic>;
+
+          String userIdFromSupply = supplyData['userId'];
+          print(userIdFromSupply);
+
+          QuerySnapshot userQuerySnapshot = await FirebaseFirestore.instance
+              .collection('users')
+              .where("id", isEqualTo: userIdFromSupply)
+              .get();
+
+          Map<String, dynamic> userData = userQuerySnapshot.docs.first.data() as Map<String, dynamic>;
+
+          return CombinedInfo.fromFirestore(supplyData, companyData, userData);
+        }).toList());
+
+        print('Gelen CombinedInfo Listesi: $userDataList');
+        return userDataList;
+      } else {
+        print('Belge bulunamadı.');
+        return [];
+      }
+    } catch (e) {
+      print('Veri çekme hatası: $e');
+    }
+    return [];
+  }
+
 
 
 }

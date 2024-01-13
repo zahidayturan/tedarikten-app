@@ -1,21 +1,27 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:tedarikten/constants/app_colors.dart';
+import 'package:tedarikten/models/user_info.dart';
+import 'package:tedarikten/pages/homePage/active_adverts.dart';
+import 'package:tedarikten/pages/homePage/my_active_adverts.dart';
 import 'package:tedarikten/pages/login_page.dart';
+import 'package:tedarikten/riverpod_management.dart';
 import 'package:tedarikten/ui/home_app_bar.dart';
 import 'package:tedarikten/ui/navigation_bar.dart';
+import 'package:tedarikten/utils/firestore_helper.dart';
 
 
-class HomePage extends StatefulWidget {
+class HomePage extends ConsumerStatefulWidget {
   const HomePage({super.key});
   @override
-  State<HomePage> createState() => _MyHomePageState();
+  ConsumerState<HomePage> createState() => _MyHomePageState();
 }
 
-class _MyHomePageState extends State<HomePage> {
-
+class _MyHomePageState extends ConsumerState<HomePage> {
+  FirestoreService firestoreService = FirestoreService();
   @override
   Widget build(BuildContext context) {
     final appColors = AppColors();
@@ -29,8 +35,11 @@ class _MyHomePageState extends State<HomePage> {
         body: Padding(
           padding: const EdgeInsets.all(10.0),
           child: Column(children: [
-            easyAccessContainer()
-
+            easyAccessContainer(),
+            SizedBox(height: 16,),
+            MyActiveAdverts(),
+            SizedBox(height: 10,),
+            Expanded(child: ActiveAdverts()),
           ],),
         )
       ),
@@ -60,6 +69,7 @@ class _MyHomePageState extends State<HomePage> {
       ),
     );
   }
+
   Widget getDrawer(){
     User? user = FirebaseAuth.instance.currentUser;
     final appColors = AppColors();
@@ -84,6 +94,7 @@ class _MyHomePageState extends State<HomePage> {
                       final SharedPreferences prefs = await SharedPreferences.getInstance();
                       await prefs.setBool("showApp", false);
                       await FirebaseAuth.instance.signOut();
+                      //ref.read(customNavBarRiverpod).setCurrentIndex(0);
                       setState(() {
                       });
                     },
@@ -94,6 +105,8 @@ class _MyHomePageState extends State<HomePage> {
                 child: GestureDetector(
                   onTap: () async{
                     await FirebaseAuth.instance.signOut();
+                    //ref.read(customNavBarRiverpod).setCurrentIndex(0);
+
                     setState(() {
                     });
                   },
@@ -142,19 +155,22 @@ class _MyHomePageState extends State<HomePage> {
     final appColors = AppColors();
 
     return user != null ? FutureBuilder(
-      future: FirebaseFirestore.instance.collection('users').doc(user.uid).get(),
+      future: firestoreService.getUserInfo(user!.uid),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return CircularProgressIndicator();
         } else if (snapshot.hasError) {
           return Text("Hata: ${snapshot.error}");
-        } else if (!snapshot.hasData || !snapshot.data!.exists) {
-          return Text("Kullanıcı bulunamadı");
-        }else {
-          Map<String, dynamic> userData = snapshot.data!.data() as Map<String, dynamic>;
+        } else if (!snapshot.hasData || snapshot.data == null) {
+          return Padding(
+            padding: const EdgeInsets.only(top: 8.0),
+            child: Text("Kullanıcı bulunamadı"),
+          );
+        } else {
+          TUserInfo userData = snapshot.data!;
 
-          String name = userData['name'];
-          String surname = userData['surname'];
+          String name = userData.name;
+          String surname = userData.surname;
           return Padding(
             padding: const EdgeInsets.only(left: 16,top: 16),
             child: Row(

@@ -19,6 +19,8 @@ class LoginPage extends ConsumerStatefulWidget {
 
 
 class _LoginPageState extends ConsumerState<LoginPage> {
+  final _emailKey = GlobalKey<FormState>();
+  final _passwordKey = GlobalKey<FormState>();
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
 
@@ -48,16 +50,55 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                           color: appColors.blueDark,
                           height: 1),),
                   ),
-                  getTextField(context, emailController, "E-posta"),
+                  getTextField(context, emailController, "E-posta",_emailKey),
                   SizedBox(height: 16.0),
-                  getTextField(context, passwordController, "Şifre"),
+                  getTextField(context, passwordController, "Şifre",_passwordKey),
                   SizedBox(height: 16.0),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.end,
                     children: [
                       GestureDetector(
                         onTap: () async{
-                          await signInWithEmailAndPassword(context,ref);
+                          if (_emailKey.currentState!.validate()&& _passwordKey.currentState!.validate()) {
+                            showDialog(
+                              context: context,
+                              builder: (BuildContext context) {
+                                return Center(
+                                  child: CircularProgressIndicator(
+                                    color: appColors.blueLight,
+                                  ),
+                                );
+                              },
+                              barrierDismissible: false, // Kullanıcının dışarı tıklamasını engeller
+                            );
+                            await signInWithEmailAndPassword(context,ref);
+                            Navigator.pop(context);
+                            final SharedPreferences prefs = await SharedPreferences.getInstance();
+                            final bool tempBool = prefs.getBool("showApp") ?? false;
+                            await prefs.setBool("showApp", true);
+                            final bool showApp = prefs.getBool("showApp") ?? false;
+                            print(tempBool);
+                            if (tempBool == false) {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(builder: (context) => MyAppBase(showApp: showApp)),
+                              );
+                            } else {
+                              Navigator.pop(context);
+                            }
+                          }else{
+                            ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                    behavior: SnackBarBehavior.floating,
+                                    backgroundColor: appColors.blueDark,
+                                    elevation: 0,
+                                    content: Center(
+                                      child: Text(
+                                        "Eksik bilgi verdiniz",
+                                        style: const TextStyle(fontSize: 16, height: 1),
+                                      ),
+                                    )));
+                          }
                         },
                         child: Container(
                           decoration: BoxDecoration(
@@ -146,24 +187,54 @@ class _LoginPageState extends ConsumerState<LoginPage> {
     );
   }
 
-  Widget getTextField(BuildContext context,TextEditingController? controller,String text){
+  String? emailValidate(String? value) {
+    if (value!.isEmpty) {
+      return 'E-posta boş bırakılamaz';
+    }
+    if (!RegExp(r'^[\w-]+(\.[\w-]+)*@[\w-]+(\.[\w-]+)+$').hasMatch(value)) {
+      return 'Geçerli bir e-posta adresi girin';
+    }
+    return null;
+  }
+
+  String? passwordValidate(String? value) {
+    if (value!.isEmpty) {
+      return 'Şifre boş bırakılamaz';
+    }
+    if (value.length < 6) {
+      return 'Şifre en az 6 karakter olmalıdır';
+    }
+    return null;
+  }
+
+  Widget getTextField(BuildContext context,TextEditingController? controller,String text,Key key){
     final appColors = AppColors();
-    return TextField(
-      controller: controller,
-      decoration: InputDecoration(
-          labelText: text,
-          labelStyle: TextStyle(color: appColors.blueDark),
-          enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.all(Radius.circular(6)),
-              borderSide: BorderSide(
-                  width: 1,
-                  color: appColors.blueDark
-              )),
-          border: OutlineInputBorder(
-              borderRadius: BorderRadius.all(Radius.circular(6)),
-              borderSide: BorderSide(
-                  width: 1,
-                  color: appColors.blueDark))),
+    return Form(
+      key: key,
+      child: TextFormField(
+        controller: controller,
+        validator: (value) {
+          if(text == "E-posta"){
+            return emailValidate(value);
+          } else{
+            return passwordValidate(value);
+          }
+        },
+        decoration: InputDecoration(
+            labelText: text,
+            labelStyle: TextStyle(color: appColors.blueDark),
+            enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.all(Radius.circular(6)),
+                borderSide: BorderSide(
+                    width: 1,
+                    color: appColors.blueDark
+                )),
+            border: OutlineInputBorder(
+                borderRadius: BorderRadius.all(Radius.circular(6)),
+                borderSide: BorderSide(
+                    width: 1,
+                    color: appColors.blueDark))),
+      ),
     );
 
   }
@@ -174,24 +245,12 @@ class _LoginPageState extends ConsumerState<LoginPage> {
         email: emailController.text,
         password: passwordController.text,
       );
+      User? user = FirebaseAuth.instance.currentUser;
 
-      final SharedPreferences prefs = await SharedPreferences.getInstance();
-      final bool tempBool = prefs.getBool("showApp") ?? false;
-      await prefs.setBool("showApp", true);
-      final bool showApp = prefs.getBool("showApp") ?? false;
-      print(tempBool);
-      if (tempBool == false) {
-        User? user = FirebaseAuth.instance.currentUser;
-        await FirestoreService().getUserInfo(user!.uid).then((value) {
-          ref.read(firebaseControllerRiverpod).fetchUser(value!);
-        });
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => MyAppBase(showApp: showApp)),
-        );
-      } else {
-        Navigator.pop(context);
-      }
+      await FirestoreService().getUserInfo(user!.uid).then((value) {
+        ref.read(firebaseControllerRiverpod).fetchUser(value!);
+      });
+
     } catch (e) {
       print('Giriş hatası: $e');
       showLoginErrorDialog(context, e.toString());

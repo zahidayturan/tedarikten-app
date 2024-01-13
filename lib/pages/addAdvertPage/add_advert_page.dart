@@ -21,9 +21,11 @@ class _AddAdvertPageState extends ConsumerState<AddAdvertPage> {
   User? user = FirebaseAuth.instance.currentUser;
   FirestoreService firestoreService = FirestoreService();
   late TUserInfo? userData;
+  late PageController _pageViewController;
   @override
   void initState(){
     super.initState();
+    _pageViewController = PageController(initialPage: ref.read(addAdvertPageRiverpod).switchCurrentIndex);
     if(user != null){
       getUser();
     }
@@ -37,7 +39,7 @@ class _AddAdvertPageState extends ConsumerState<AddAdvertPage> {
       print('User not found');
     }
   }
-  final PageController _pageViewController = PageController();
+
   Widget build(BuildContext context) {
     var readNavBar = ref.read(customNavBarRiverpod);
     var read = ref.read(addAdvertPageRiverpod);
@@ -55,24 +57,27 @@ class _AddAdvertPageState extends ConsumerState<AddAdvertPage> {
             child: Column(
               children: [
                 topWidget(user),
-                Padding(
-                  padding: EdgeInsets.all(10),
-                  child: Container(
-                    height: size.height-320,
-                    width: size.width,
-                    child: PageView(
-                        physics: BouncingScrollPhysics(),
-                        controller: _pageViewController,
-                        onPageChanged: (value) {
-                          read.setswitchCurrentIndex(value);
-                          setState(() {
-                          });
-                        },
-                        children: [
-                          FindSupply(),
-                          BeSupplier()
-                        ]),
-                  ),
+                Container(
+                  height: size.height-310,
+                  width: size.width,
+                  child: PageView(
+                      physics: BouncingScrollPhysics(),
+                      controller: _pageViewController,
+                      onPageChanged: (value) {
+                        read.setswitchCurrentIndex(value);
+                        setState(() {
+                        });
+                      },
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 10),
+                          child: FindSupply(),
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 10),
+                          child: BeSupplier(),
+                        )
+                      ]),
                 ),
               ],
             ),

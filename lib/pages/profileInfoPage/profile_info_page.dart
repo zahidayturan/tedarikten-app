@@ -18,13 +18,14 @@ class ProfilePage extends ConsumerStatefulWidget {
 }
 
 class _ProfilePage extends ConsumerState<ProfilePage> {
-  final PageController _pageViewController = PageController();
+  late PageController _pageViewController;
   User? user = FirebaseAuth.instance.currentUser;
   FirestoreService firestoreService = FirestoreService();
   late TUserInfo? userData;
   @override
   void initState(){
     super.initState();
+    _pageViewController = PageController(initialPage: ref.read(profilePageRiverpod).switchCurrentIndex);
     if(user != null){
       getUser();
     }
@@ -46,31 +47,35 @@ class _ProfilePage extends ConsumerState<ProfilePage> {
     var read = ref.read(profilePageRiverpod);
     int switchIndex = read.switchCurrentIndex;
     var size = MediaQuery.of(context).size;
-
-
+    if(user != null){
+      getUser();
+    }
     return SafeArea(
       child: Scaffold(
         body: Column(
           children: [
             topWidget(user),
-            Padding(
-              padding: EdgeInsets.all(10),
-              child: Container(
-                height: size.height-320,
-                width: size.width,
-                child: PageView(
-                    physics: BouncingScrollPhysics(),
-                    controller: _pageViewController,
-                    onPageChanged: (value) {
-                      read.setswitchCurrentIndex(value);
-                      setState(() {
-                      });
-                    },
-                    children: [
-                      MyPosts(),
-                      MyActivePosts()
-                    ]),
-              ),
+            Container(
+              height: size.height-300,
+              width: size.width,
+              child: PageView(
+                  physics: BouncingScrollPhysics(),
+                  controller: _pageViewController,
+                  onPageChanged: (value) {
+                    read.setswitchCurrentIndex(value);
+                    setState(() {
+                    });
+                  },
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 10),
+                      child: MyPosts(),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 10),
+                      child: MyActivePosts(),
+                    )
+                  ]),
             ),
           ],
         ),
