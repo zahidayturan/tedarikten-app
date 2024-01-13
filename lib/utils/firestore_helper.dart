@@ -63,17 +63,29 @@ class FirestoreService {
         userDataList = await Future.wait(documents.map((doc) async {
           Map<String, dynamic> supplyData = doc.data() as Map<String, dynamic>;
 
-
           String companyId = supplyData['companyId'];
-
-          DocumentSnapshot companyDoc = await FirebaseFirestore.instance
-              .collection('companies')
-              .doc(companyId)
-              .get();
-          Map<String, dynamic> companyData = companyDoc.data() as Map<String, dynamic>;
-
           String userIdFromSupply = supplyData['userId'];
-          print(userIdFromSupply);
+
+          Map<String, dynamic> companyData = {};
+          if (companyId != "0") {
+            DocumentSnapshot companyDoc = await FirebaseFirestore.instance
+                .collection('companies')
+                .doc(companyId)
+                .get();
+            companyData = companyDoc.data() as Map<String, dynamic>;
+          }else{
+            CompanyInfo myDataInstance = CompanyInfo(
+              name: "",
+              location: "",
+              year: 11111,
+              phone: "",
+              address: "",
+              personNameSurname: "",
+              personEmail: "",
+              userId: "",
+            );
+             companyData = myDataInstance.toJson();
+          }
 
           QuerySnapshot userQuerySnapshot = await FirebaseFirestore.instance
               .collection('users')
@@ -96,6 +108,7 @@ class FirestoreService {
     }
     return [];
   }
+
 
 
 

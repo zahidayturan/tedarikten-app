@@ -49,4 +49,5 @@ class CompanyInfo {
       'userId': userId,
     };
   }
+
 }

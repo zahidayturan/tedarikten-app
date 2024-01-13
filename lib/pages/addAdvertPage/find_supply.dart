@@ -172,6 +172,7 @@ class _FindSupplyState extends ConsumerState<FindSupply> {
                 getSectionContainerWithRow(true,"Firma Yetkilisi\ne-Posta Adresi",getTextFormField(0,0,54,companyPersonEmailSupplyController,"Mail adresini yazınız",36,2,appColors.blueLight,"",_companyPersonEmailSupplyKey)),
                 SizedBox(height: 16,),
                 getSectionText("Ek Dosyalar", appColors.blue),
+                SizedBox(height: 8,),
                 getSectionContainerWithRow(false, "Dosya Eklemek İçin Dokunun", SizedBox())
               ],
             ),
@@ -266,7 +267,6 @@ class _FindSupplyState extends ConsumerState<FindSupply> {
   }
 
   Widget getButton(String text,Color buttonColor,Color textColor,double fontSize){
-
     var size = MediaQuery.of(context).size;
     return Container(
       decoration: BoxDecoration(

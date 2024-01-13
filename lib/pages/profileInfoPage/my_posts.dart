@@ -3,8 +3,6 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:tedarikten/constants/app_colors.dart';
-import 'package:tedarikten/models/company_info.dart';
-import 'package:tedarikten/models/supply_info.dart';
 import 'package:tedarikten/pages/profileInfoPage/combined_info.dart';
 import 'package:tedarikten/riverpod_management.dart';
 import 'package:intl/intl.dart';
@@ -27,9 +25,6 @@ class _MyPostsState extends ConsumerState<MyPosts> {
 
     }
   }
-
-
-
 
   Widget build(BuildContext context) {
     final appColors = AppColors();
@@ -105,6 +100,8 @@ class _MyPostsState extends ConsumerState<MyPosts> {
     DateTime sharingDateTime =  DateTime.parse(data.supplyInfo.sharingDate);
     String sharingDate = DateFormat('dd.MM.yyyy').format(sharingDateTime);
     String sharingTime = DateFormat('HH:mm').format(sharingDateTime);
+
+    String companyName = data.companyInfo.name != "" ? data.companyInfo.name  : "Tedarikçi Olacak" ;
 
     String getCompleteStatus(){
       if(data.supplyInfo.dateLast != "" && data.supplyInfo.dateFirst != ""){
@@ -198,8 +195,11 @@ class _MyPostsState extends ConsumerState<MyPosts> {
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      getText(data.companyInfo.name, 14, "FontNormal", appColors.black,TextAlign.start),
-                      getText(data.supplyInfo.name, 13, "FontNormal", appColors.black,TextAlign.start),
+                      getText(companyName, 14, "FontNormal", appColors.black,TextAlign.start),
+                      Padding(
+                        padding: const EdgeInsets.only(top: 4),
+                        child: getText(data.supplyInfo.name, 13, "FontNormal", appColors.black,TextAlign.start),
+                      ),
                     ],
                   ),
                 ],
