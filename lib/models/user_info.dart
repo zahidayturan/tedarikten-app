@@ -3,6 +3,7 @@ class TUserInfo {
   String name;
   String surname;
   String email;
+  String profession;
   String city;
   String country;
   bool? isVerified;
@@ -16,6 +17,7 @@ class TUserInfo {
     required this.name,
     required this.surname,
     required this.email,
+    required this.profession,
     required this.city,
     required this.country,
     this.followList,
@@ -32,6 +34,7 @@ class TUserInfo {
       email: json['email'] ?? '',
       city: json['city'] ?? '',
       country: json['country'] ?? '',
+      profession: json['profession'] ?? '',
       followList: json['followList'] ?? '',
       followerList: json['followerList'] ?? '',
       advertList: json['advertList'] ?? '',
@@ -47,6 +50,7 @@ class TUserInfo {
       'email': email,
       'city': city,
       'country': country,
+      'profession': profession,
       'followList': followList,
       'followerList': followerList,
       'advertList': advertList,

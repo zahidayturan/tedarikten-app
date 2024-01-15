@@ -3,7 +3,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:tedarikten/constants/app_colors.dart';
-import 'package:tedarikten/pages/profileInfoPage/combined_info.dart';
+import 'package:tedarikten/models/combined_info.dart';
+import 'package:tedarikten/pages/supply_details_page.dart';
 import 'package:tedarikten/riverpod_management.dart';
 import 'package:intl/intl.dart';
 import 'package:tedarikten/utils/firestore_helper.dart';
@@ -53,7 +54,6 @@ class _MyPostsState extends ConsumerState<MyPosts> {
             return Center(child: Text("Bir sorun oluştu",style:  TextStyle(color: appColors.blueDark),));
           }else{
             List<CombinedInfo>? supplyDataList = snapshot.data;
-            print(supplyDataList![0].userInfo.name);
             if(supplyDataList!.isEmpty){
               return Center(
                 child: RichText(
@@ -217,20 +217,29 @@ class _MyPostsState extends ConsumerState<MyPosts> {
                   child: getText(sharingTime, 12, "FontNormal", appColors.black, TextAlign.start),
                 ),
                 Spacer(),
-                Container(
-                  height: 20,
-                  decoration: BoxDecoration(
-                    color: appColors.blueDark,
-                    borderRadius: BorderRadius.all(Radius.circular(5))
-                  ),
-                  child: Center(
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 4),
-                      child: Row(
-                        children: [
-                          getText("Detayları görüntüle", 12, "FontNormal", appColors.white, TextAlign.center),
-                          Icon(Icons.arrow_forward_ios_rounded,color: appColors.white,size: 11,)
-                        ],
+                GestureDetector(
+                  onTap: () {
+                    ref.read(profilePageRiverpod).setSupplyDetailsId(data);
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => SupplyDetailsPage()),
+                    );
+                  },
+                  child: Container(
+                    height: 20,
+                    decoration: BoxDecoration(
+                      color: appColors.blueDark,
+                      borderRadius: BorderRadius.all(Radius.circular(5))
+                    ),
+                    child: Center(
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 4),
+                        child: Row(
+                          children: [
+                            getText("Detayları görüntüle", 12, "FontNormal", appColors.white, TextAlign.center),
+                            Icon(Icons.arrow_forward_ios_rounded,color: appColors.white,size: 11,)
+                          ],
+                        ),
                       ),
                     ),
                   ),

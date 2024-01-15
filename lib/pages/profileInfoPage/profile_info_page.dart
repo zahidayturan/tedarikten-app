@@ -221,11 +221,11 @@ class _ProfilePage extends ConsumerState<ProfilePage> {
                   Text("${userData!.name} ${userData!.surname}",style: TextStyle(color: appColors.white,fontFamily: "FontBold",fontSize: 16),),
                   Padding(
                     padding: const EdgeInsets.symmetric(vertical: 2),
-                    child: Text("Ürün Tedarikçisi",style: TextStyle(color: appColors.white,fontSize: 15),),
+                    child: Text(userData!.profession,style: TextStyle(color: appColors.white,fontSize: 15),),
                   ),
                   Padding(
                     padding: const EdgeInsets.symmetric(vertical: 2),
-                    child: Text("Ankara/Türkiye",style: TextStyle(color: appColors.white,fontSize: 14),),
+                    child: Text("${userData!.city} / ${userData!.country}",style: TextStyle(color: appColors.white,fontSize: 14),),
                   ),
                   Padding(
                     padding: const EdgeInsets.only(top: 6),
@@ -248,7 +248,7 @@ class _ProfilePage extends ConsumerState<ProfilePage> {
                 child: GestureDetector(
                   onTap: () async{
                   },
-                  child: getUserPanelButton("0 Takip"),
+                  child: getUserPanelButton("${userData!.followList?.length} Takip"),
                 ),
               ),
               Padding(
@@ -256,13 +256,13 @@ class _ProfilePage extends ConsumerState<ProfilePage> {
                 child: GestureDetector(
                   onTap: () async{
                   },
-                  child: getUserPanelButton("0 Takipçi"),
+                  child: getUserPanelButton("${userData!.followerList?.length} Takipçi"),
                 ),
               ),
               GestureDetector(
                 onTap: () async{
                 },
-                child: getUserPanelButton("0 İlan"),
+                child: getUserPanelButton("${userData!.advertList?.length} İlan"),
               ),
             ],)
           ],

@@ -1,15 +1,19 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:tedarikten/constants/app_colors.dart';
 import 'package:tedarikten/pages/profileInfoPage/profile_info_page.dart';
-import 'package:tedarikten/pages/sign_up_page.dart';
+import 'package:tedarikten/utils/firestore_helper.dart';
+import '../riverpod_management.dart';
 
-class HomeAppBar extends StatelessWidget implements  PreferredSizeWidget{
+
+class HomeAppBar extends ConsumerWidget implements  PreferredSizeWidget{
+  const HomeAppBar({super.key});
 
   Size get preferredSize => const Size.fromHeight(64);
 
-  Widget build(BuildContext context){
+  Widget build(BuildContext context, WidgetRef ref){
     final appColors = AppColors();
     var size = MediaQuery.of(context).size;
     return Center(
@@ -105,7 +109,13 @@ class HomeAppBar extends StatelessWidget implements  PreferredSizeWidget{
           Padding(
             padding: const EdgeInsets.only(left: 4,right: 10),
             child: GestureDetector(
-              onTap: () {
+              onTap: () async{
+                User? user = FirebaseAuth.instance.currentUser;
+                if(user != null){
+                  await FirestoreService().getUserInfo(user!.uid).then((value) {
+                    ref.read(firebaseControllerRiverpod).fetchUser(value!);
+                  });
+                }
                 Navigator.push(
                   context,
                   MaterialPageRoute(builder: (context) => ProfilePage()),

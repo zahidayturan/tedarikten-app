@@ -21,12 +21,14 @@ class _SignUpPageState extends ConsumerState<SignUpPage> {
   final _emailKey = GlobalKey<FormState>();
   final _nameKey = GlobalKey<FormState>();
   final _surnameKey = GlobalKey<FormState>();
+  final _professionKey = GlobalKey<FormState>();
   final _cityKey = GlobalKey<FormState>();
   final _countryKey = GlobalKey<FormState>();
   final _passwordKey = GlobalKey<FormState>();
   final TextEditingController nameController = TextEditingController();
   final TextEditingController surnameController = TextEditingController();
   final TextEditingController emailController = TextEditingController();
+  final TextEditingController professionController = TextEditingController();
   final TextEditingController cityController = TextEditingController();
   final TextEditingController countryController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
@@ -62,6 +64,8 @@ class _SignUpPageState extends ConsumerState<SignUpPage> {
                 SizedBox(height: 16.0),
                 getTextField(context, emailController, "E-posta",_emailKey),
                 SizedBox(height: 16.0),
+                getTextField(context, professionController, "Meslek",_professionKey),
+                SizedBox(height: 16.0),
                 getTextField(context, cityController, "Şehir",_cityKey),
                 SizedBox(height: 16.0),
                 getTextField(context, countryController, "Ülke",_countryKey),
@@ -76,6 +80,7 @@ class _SignUpPageState extends ConsumerState<SignUpPage> {
                         if (_nameKey.currentState!.validate()
                             && _surnameKey.currentState!.validate()
                             && _emailKey.currentState!.validate()
+                            && _professionKey.currentState!.validate()
                             && _cityKey.currentState!.validate()
                             && _countryKey.currentState!.validate()
                             && _passwordKey.currentState!.validate()
@@ -240,6 +245,16 @@ class _SignUpPageState extends ConsumerState<SignUpPage> {
     return null;
   }
 
+  String? professionValidate(String? value) {
+    if (value!.isEmpty) {
+      return 'Meslek boş bırakılamaz';
+    }
+    if (value.length < 5) {
+      return 'Meslek en az 5 karakter olmalıdır';
+    }
+    return null;
+  }
+
   String? cityValidate(String? value) {
     if (value!.isEmpty) {
       return 'Şehir boş bırakılamaz';
@@ -276,6 +291,8 @@ class _SignUpPageState extends ConsumerState<SignUpPage> {
             return nameValidate(value);
           }else if(text == "Soyad"){
             return surnameValidate(value);
+          }else if(text == "Meslek"){
+            return professionValidate(value);
           }else if(text == "Şehir"){
             return cityValidate(value);
           }else if(text == "Ülke"){
@@ -314,7 +331,7 @@ class _SignUpPageState extends ConsumerState<SignUpPage> {
         email: emailController.text,
         password: passwordController.text,
       );
-      await addTUserInfoToFirestore(userCredential.user!.uid, TUserInfo(id: userCredential.user!.uid, name: nameController.text, surname: surnameController.text, email: emailController.text, city: cityController.text, country: countryController.text,advertList: [],companyList: [],followerList: [],followList: []));
+      await addTUserInfoToFirestore(userCredential.user!.uid, TUserInfo(id: userCredential.user!.uid, name: nameController.text, surname: surnameController.text, email: emailController.text,profession: professionController.text, city: cityController.text, country: countryController.text,advertList: [],companyList: [],followerList: [],followList: []));
     } catch (e) {
       print('Kayıt hatası: $e');
     }

@@ -1,10 +1,8 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:tedarikten/constants/app_colors.dart';
 import 'package:tedarikten/models/user_info.dart';
-import 'package:tedarikten/pages/addAdvertPage/be_supplier.dart';
 import 'package:tedarikten/pages/addAdvertPage/find_supply.dart';
 import 'package:tedarikten/pages/login_page.dart';
 import 'package:tedarikten/riverpod_management.dart';
@@ -21,11 +19,9 @@ class _AddAdvertPageState extends ConsumerState<AddAdvertPage> {
   User? user = FirebaseAuth.instance.currentUser;
   FirestoreService firestoreService = FirestoreService();
   late TUserInfo? userData;
-  late PageController _pageViewController;
   @override
   void initState(){
     super.initState();
-    _pageViewController = PageController(initialPage: ref.read(addAdvertPageRiverpod).switchCurrentIndex);
     if(user != null){
       getUser();
     }
@@ -60,24 +56,10 @@ class _AddAdvertPageState extends ConsumerState<AddAdvertPage> {
                 Container(
                   height: size.height-310,
                   width: size.width,
-                  child: PageView(
-                      physics: BouncingScrollPhysics(),
-                      controller: _pageViewController,
-                      onPageChanged: (value) {
-                        read.setswitchCurrentIndex(value);
-                        setState(() {
-                        });
-                      },
-                      children: [
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 10),
-                          child: FindSupply(),
-                        ),
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 10),
-                          child: BeSupplier(),
-                        )
-                      ]),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 10),
+                    child: FindSupply(),
+                  ),
                 ),
               ],
             ),
@@ -296,7 +278,6 @@ class _AddAdvertPageState extends ConsumerState<AddAdvertPage> {
                         onTap: () {
                           setState(() {
                             read.setswitchCurrentIndex(0);
-                            _pageViewController.animateToPage(0, duration: Duration(milliseconds: 300), curve: Curves.linearToEaseOut,);
                           });
                         },
                         child: Text(
@@ -309,7 +290,6 @@ class _AddAdvertPageState extends ConsumerState<AddAdvertPage> {
                         onTap: () {
                           setState(() {
                             read.setswitchCurrentIndex(1);
-                            _pageViewController.animateToPage(1, duration: Duration(milliseconds: 300), curve: Curves.linearToEaseOut,);
                           });
                         },
                         child: Text("Tedarikçi Ol",style: TextStyle(

@@ -128,48 +128,54 @@ class _FindSupplyState extends ConsumerState<FindSupply> {
                 getSectionContainerWithRow(false,"Minimum Teslim Süresi",getTextFormField(1,60,28,minDeliveryTimeSupplyController,"Girin",4,1,appColors.white,"Gün",_removedKey3)),
                 SizedBox(height: 8,),
                 getSectionContainerWithRow(false,"Konumu",getDropDownMenu(getTurkishCitiesList,locationSupplyController," /Türkiye",appColors.blueDark)),
-
-                SizedBox(height: 16,),
-                getSectionText("Firma Bilgileri", appColors.blueLight),
-                SizedBox(height: 8,),
-                getSectionContainerWithRow(true,"Firma\nAdı",getTextFormField(0,0,54,companyNameSupplyController,"Firma adını yazınız",108,2,appColors.blueLight,"",_companyNameSupplyKey)),
-                SizedBox(height: 8,),
-                getSectionContainerWithRow(true,"Konumu",getDropDownMenu(getTurkishCitiesList,locationCompanySupplyController," /Türkiye",appColors.blueLight)),
-                SizedBox(height: 8,),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Container(
-                      width: 124,
-                      height: 64,
-                      decoration: BoxDecoration(
-                        color: appColors.white,
-                        borderRadius: BorderRadius.all(Radius.circular(5))
+                Visibility(
+                  visible: ref.read(addAdvertPageRiverpod).switchCurrentIndex == 0,
+                  child: Column(
+                    children: [
+                      SizedBox(height: 16,),
+                      getSectionText("Firma Bilgileri", appColors.blueLight),
+                      SizedBox(height: 8,),
+                      getSectionContainerWithRow(true,"Firma\nAdı",getTextFormField(0,0,54,companyNameSupplyController,"Firma adını yazınız",108,2,appColors.blueLight,"",_companyNameSupplyKey)),
+                      SizedBox(height: 8,),
+                      getSectionContainerWithRow(true,"Konumu",getDropDownMenu(getTurkishCitiesList,locationCompanySupplyController," /Türkiye",appColors.blueLight)),
+                      SizedBox(height: 8,),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Container(
+                            width: 124,
+                            height: 64,
+                            decoration: BoxDecoration(
+                              color: appColors.white,
+                              borderRadius: BorderRadius.all(Radius.circular(5))
+                            ),
+                            child: Padding(
+                              padding: const EdgeInsets.only(right: 4),
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                                children: [
+                                  Text("Kuruluş Yılı",style: TextStyle(color: appColors.black,height: 1,fontSize: 14),),
+                                  getTextFormField(2,100,28,companyYearSupplyController,"Yıl yazınız",4,1,appColors.white,"",_removedKey4),
+                                ],
+                              ),
+                            ),
+                          ),
+                          Expanded(
+                              child: Padding(
+                            padding: const EdgeInsets.only(left: 4),
+                            child: getSectionContainerWithRow(true,"İletişim\nNumarası",getTextFormField(0,0,54,companyPhoneSupplyController,"0*** *** ** **",14,1,appColors.blueLight,"",_companyPhoneSupplyKey)),
+                          )),
+                        ],
                       ),
-                      child: Padding(
-                        padding: const EdgeInsets.only(right: 4),
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.spaceAround,
-                          children: [
-                            Text("Kuruluş Yılı",style: TextStyle(color: appColors.black,height: 1,fontSize: 14),),
-                            getTextFormField(2,100,28,companyYearSupplyController,"Yıl yazınız",4,1,appColors.white,"",_removedKey4),
-                          ],
-                        ),
-                      ),
-                    ),
-                    Expanded(
-                        child: Padding(
-                      padding: const EdgeInsets.only(left: 4),
-                      child: getSectionContainerWithRow(true,"İletişim\nNumarası",getTextFormField(0,0,54,companyPhoneSupplyController,"0*** *** ** **",14,1,appColors.blueLight,"",_companyPhoneSupplyKey)),
-                    )),
-                  ],
+                      SizedBox(height: 8,),
+                      getSectionContainerWithRow(false,"Adres\nBilgisi",getTextFormField(0,0,54,companyAddressSupplyController,"Adres metnini yazınız",108,2,appColors.blueLight,"",_removedKey5)),
+                      SizedBox(height: 8,),
+                      getSectionContainerWithRow(true,"Firma Yetkilisi\nAdı Soyadı",getTextFormField(0,0,54,companyPersonNameSurnameSupplyController,"Bilgileri yazınız",24,2,appColors.blueLight,"",_companyPersonNameSurnameSupplyKey)),
+                      SizedBox(height: 8,),
+                      getSectionContainerWithRow(true,"Firma Yetkilisi\ne-Posta Adresi",getTextFormField(0,0,54,companyPersonEmailSupplyController,"Mail adresini yazınız",36,2,appColors.blueLight,"",_companyPersonEmailSupplyKey)),
+                    ],
+                  ),
                 ),
-                SizedBox(height: 8,),
-                getSectionContainerWithRow(false,"Adres\nBilgisi",getTextFormField(0,0,54,companyAddressSupplyController,"Adres metnini yazınız",108,2,appColors.blueLight,"",_removedKey5)),
-                SizedBox(height: 8,),
-                getSectionContainerWithRow(true,"Firma Yetkilisi\nAdı Soyadı",getTextFormField(0,0,54,companyPersonNameSurnameSupplyController,"Bilgileri yazınız",24,2,appColors.blueLight,"",_companyPersonNameSurnameSupplyKey)),
-                SizedBox(height: 8,),
-                getSectionContainerWithRow(true,"Firma Yetkilisi\ne-Posta Adresi",getTextFormField(0,0,54,companyPersonEmailSupplyController,"Mail adresini yazınız",36,2,appColors.blueLight,"",_companyPersonEmailSupplyKey)),
                 SizedBox(height: 16,),
                 getSectionText("Ek Dosyalar", appColors.blue),
                 SizedBox(height: 8,),
@@ -193,13 +199,15 @@ class _FindSupplyState extends ConsumerState<FindSupply> {
            ),
             GestureDetector(
               onTap: () async{
-                if(_nameSupplyKey.currentState!.validate()
+                if( ref.read(addAdvertPageRiverpod).switchCurrentIndex == 0 ?
+                    _nameSupplyKey.currentState!.validate()
                     && _companyNameSupplyKey.currentState!.validate()
                     && _companyPhoneSupplyKey.currentState!.validate()
                     && _companyPersonNameSurnameSupplyKey.currentState!.validate()
                     && _companyPersonEmailSupplyKey.currentState!.validate()
                     && typeSupplyController.text != "Türü Seçin"
-                    && locationCompanySupplyController.text != "Şehir Seçin"
+                    && locationCompanySupplyController.text != "Şehir Seçin" :
+                    _nameSupplyKey.currentState!.validate()
                 ){
 
                   DateTime firstDate = DateTime(selectedDateFirst.year, selectedDateFirst.month, selectedDateFirst.day, selectedTimeFirst.hour, selectedTimeFirst.minute);
@@ -220,10 +228,19 @@ class _FindSupplyState extends ConsumerState<FindSupply> {
                     },
                     barrierDismissible: false, // Kullanıcının dışarı tıklamasını engeller
                   );
-                  String companyId = await firestoreService.addCompanyToFirestore(CompanyInfo(name: companyNameSupplyController.text, location: locationCompanySupplyController.text, year: int.parse(companyYearSupplyController.text), phone: companyPhoneSupplyController.text, address: companyAddressSupplyController.text, personNameSurname: companyPersonNameSurnameSupplyController.text, personEmail: companyPersonEmailSupplyController.text, userId: user!.uid));
-
-
-                 await firestoreService.addAdvertToFirestore(SupplyInfo(type: typeSupplyController.text, name: nameSupplyController.text, description: descriptionSupplyController.text, dateFirst: firstDate.toString(), dateLast: lastDate.toString(), amount: int.parse(amountSupplyController.text), minTime: int.parse(minDeliveryTimeSupplyController.text), location: locationSupplyController.text, status: status,sharingDate: sharingDate,editingDate: editingDate,companyId: companyId, documentId: "0", sharersIdList: [],registrantsIdList: [],applicantsIdList: [],userId: user!.uid));
+                  String companyId = "0";
+                  if(ref.read(addAdvertPageRiverpod).switchCurrentIndex == 0){
+                    companyId = await firestoreService.addCompanyToFirestore(CompanyInfo(name: companyNameSupplyController.text, location: locationCompanySupplyController.text, year: int.parse(companyYearSupplyController.text), phone: companyPhoneSupplyController.text, address: companyAddressSupplyController.text, personNameSurname: companyPersonNameSurnameSupplyController.text, personEmail: companyPersonEmailSupplyController.text, userId: user!.uid));
+                  }
+                  int amount = 0;
+                  if(amountSupplyController.text.isNotEmpty){
+                    amount = int.parse(amountSupplyController.text);
+                  }
+                  int minTime= 0;
+                  if(minDeliveryTimeSupplyController.text.isNotEmpty){
+                    amount = int.parse(minDeliveryTimeSupplyController.text);
+                  }
+                 await firestoreService.addAdvertToFirestore(SupplyInfo(type: typeSupplyController.text, name: nameSupplyController.text, description: descriptionSupplyController.text, dateFirst: firstDate.toString(), dateLast: lastDate.toString(), amount: amount, minTime: minTime, location: locationSupplyController.text, status: status,sharingDate: sharingDate,editingDate: editingDate,companyId: companyId, documentId: "0", sharersIdList: [],registrantsIdList: [],applicantsIdList: [],userId: user!.uid));
                 Navigator.pop(context);
                   ref.read(customNavBarRiverpod).setCurrentIndex(0);
                 }else{

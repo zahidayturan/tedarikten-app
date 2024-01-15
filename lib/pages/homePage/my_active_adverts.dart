@@ -100,32 +100,48 @@ class _MyActiveAdvertsState extends ConsumerState<MyActiveAdverts> {
         ),
       );
     }else if(userDataList.isEmpty){
-      return Center(
-        child: RichText(
-          textAlign: TextAlign.center,
-          text: TextSpan(
-            style: TextStyle(
-                fontSize: 15,
-                height: 1,
-                color: appColors.blueDark
+      return Container(
+        height: 60,
+        margin: EdgeInsets.only(top: 8),
+        decoration: BoxDecoration(
+          color: appColors.greenLight,
+          borderRadius: BorderRadius.all(Radius.circular(5)),
+        ),
+        child: Center(
+          child: RichText(
+            textAlign: TextAlign.center,
+            text: TextSpan(
+              style: TextStyle(
+                  fontSize: 15,
+                  height: 1,
+                  color: appColors.blueDark
+              ),
+              children: <TextSpan>[
+                TextSpan(text: 'Henüz', style: TextStyle(fontFamily: "FontNormal")),
+                TextSpan(text: ' aktif ilanınız ',style: TextStyle(fontFamily: "FontBold")),
+                TextSpan(text: 'yok',style: TextStyle(fontFamily: "FontNormal")),
+              ],
             ),
-            children: <TextSpan>[
-              TextSpan(text: 'Henüz', style: TextStyle(fontFamily: "FontNormal")),
-              TextSpan(text: ' aktif ilanınız ',style: TextStyle(fontFamily: "FontBold")),
-              TextSpan(text: 'yok',style: TextStyle(fontFamily: "FontNormal")),
-            ],
           ),
         ),
       );
     } else if(userDataList == null) {
-      return Center(
-        child: RichText(
-          textAlign: TextAlign.center,
-          text: TextSpan(
-            children: <TextSpan>[
-              TextSpan(text: 'Paylaşımlarınızı görmek için\n', style: TextStyle(fontFamily: "FontNormal",color: appColors.black,fontSize: 15)),
-              TextSpan(text: 'giriş yapmalısınız',style: TextStyle(fontFamily: "FontBold",color: appColors.blueDark,fontSize: 15)),
-            ],
+      return Container(
+        height: 60,
+        margin: EdgeInsets.only(top: 8),
+        decoration: BoxDecoration(
+          color: appColors.greenLight,
+          borderRadius: BorderRadius.all(Radius.circular(5)),
+        ),
+        child: Center(
+          child: RichText(
+            textAlign: TextAlign.center,
+            text: TextSpan(
+              children: <TextSpan>[
+                TextSpan(text: 'Paylaşımlarınızı görmek için\n', style: TextStyle(fontFamily: "FontNormal",color: appColors.black,fontSize: 15)),
+                TextSpan(text: 'giriş yapmalısınız',style: TextStyle(fontFamily: "FontBold",color: appColors.blueDark,fontSize: 15)),
+              ],
+            ),
           ),
         ),
       );
@@ -136,6 +152,7 @@ class _MyActiveAdvertsState extends ConsumerState<MyActiveAdverts> {
 
   Widget getPostContainer(SupplyInfo data) {
     final appColors = AppColors();
+    var size = MediaQuery.of(context).size;
 
     DateTime firstDateTime = data.dateFirst != "" ? DateTime.parse(data.dateFirst) : DateTime.now();
     String firstDate = DateFormat('dd.MM.yyyy').format(firstDateTime);
@@ -144,9 +161,9 @@ class _MyActiveAdvertsState extends ConsumerState<MyActiveAdverts> {
     String lastDate = DateFormat('dd.MM.yyyy').format(lastDateTime);
 
     return Container(
-      width: 360,
+      width: userDataList.length != 1 ? 360 : size.width-20,
       height: 120,
-      margin: EdgeInsets.only(right: 8,top: 8),
+      margin:  EdgeInsets.only(right: userDataList.length != 1 ? 8 : 0,top: 8),
       padding: EdgeInsets.all(8.0),
       decoration: BoxDecoration(
         color: appColors.greenLight,
