@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:tedarikten/constants/app_colors.dart';
@@ -8,6 +9,7 @@ import 'package:tedarikten/pages/supply_details_page.dart';
 import 'package:tedarikten/riverpod_management.dart';
 import 'package:intl/intl.dart';
 import 'package:tedarikten/utils/firestore_helper.dart';
+import 'package:tedarikten/utils/notifications_service.dart';
 
 class MyPosts extends ConsumerStatefulWidget {
   const MyPosts({Key? key}) : super(key: key);
@@ -18,6 +20,7 @@ class MyPosts extends ConsumerStatefulWidget {
 
 class _MyPostsState extends ConsumerState<MyPosts> {
   User? user = FirebaseAuth.instance.currentUser;
+  final FirebaseMessaging _firebaseMessaging = FirebaseMessaging.instance;
   late List<CombinedInfo> userDataList = [];
   @override
   void initState() {
@@ -140,13 +143,18 @@ class _MyPostsState extends ConsumerState<MyPosts> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               getText(postInfo, 11, "FontNormal", appColors.blue,TextAlign.start),
-              Container(height: 16,width: 36,
-              padding: EdgeInsets.symmetric(horizontal: 6),
-              decoration: BoxDecoration(
-                color: getStatusColor(),
-                borderRadius: BorderRadius.all(Radius.circular(10))
-              ),
-              child: Image(color:appColors.white,fit: BoxFit.fitWidth,image: AssetImage("assets/icons/dots.png")),)
+              GestureDetector(
+                onTapDown: (TapDownDetails details) async {
+                  await _showPopupMenu(details.globalPosition,data.supplyInfo.id!,user!.uid,data.userInfo.id);
+                  },
+                child: Container(height: 16,width: 36,
+                padding: EdgeInsets.symmetric(horizontal: 6),
+                decoration: BoxDecoration(
+                  color: getStatusColor(),
+                  borderRadius: BorderRadius.all(Radius.circular(10))
+                ),
+                child: Image(color:appColors.white,fit: BoxFit.fitWidth,image: AssetImage("assets/icons/dots.png")),),
+              )
             ],
           ),
           Row(
@@ -252,7 +260,32 @@ class _MyPostsState extends ConsumerState<MyPosts> {
       ),
     );
   }
-  
+
+  _showPopupMenu(Offset offset,String documentId,String currentUserId,String otherUserId) async {
+    double left = offset.dx;
+    double top = offset.dy;
+    await showMenu(
+      context: context,
+      position: RelativeRect.fromLTRB(left, top+12, 12, 0),
+      items: [
+        PopupMenuItem<String>(
+            child: const Text('Sil'), value: 'Sil',onTap: () async{
+              String message = await FirestoreService().deleteSupply(documentId,currentUserId,otherUserId);
+              print(message);
+              setState(() {
+
+              });
+              },),
+        PopupMenuItem<String>(
+            child: const Text('Düzenle'), value: 'Düzenle',onTap: () async{
+
+            },),
+      ],
+      elevation: 8.0,
+    );
+  }
+
+
   Widget getText(String text, double size, String family, Color textColor, TextAlign align){
     return Text(text,
       textAlign: align,

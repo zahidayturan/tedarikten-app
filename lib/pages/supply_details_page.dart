@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:tedarikten/constants/app_colors.dart';
 import 'package:tedarikten/models/combined_info.dart';
+import 'package:tedarikten/models/notification_info.dart';
 import 'package:tedarikten/models/user_info.dart';
 import 'package:tedarikten/riverpod_management.dart';
 import 'package:tedarikten/utils/firestore_helper.dart';
@@ -20,8 +21,8 @@ class SupplyDetailsPage extends ConsumerStatefulWidget {
 class _SupplyDetailsPageState extends ConsumerState<SupplyDetailsPage> {
   User? user = FirebaseAuth.instance.currentUser;
   late CombinedInfo userData;
+  PageController _pageControllerForDialog = PageController(initialPage: 0);
   final appColors = AppColors();
-
   @override
   void initState() {
     super.initState();
@@ -57,38 +58,508 @@ class _SupplyDetailsPageState extends ConsumerState<SupplyDetailsPage> {
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         crossAxisAlignment: CrossAxisAlignment.end,
         children: [
-          getPanelButton("Kaydet",15,"FontBold",appColors.blue,appColors.white),
           GestureDetector(
-            onTap: () async{
-                try {
-                  User? user = FirebaseAuth.instance.currentUser;
-                  TUserInfo?  userCurrent = await FirestoreService().getUserInfo(user!.uid);
+              onTap: () async{
+                showDialog(
+                  context: context,
+                  builder: (BuildContext context) {
+                    return Center(
+                      child: Container(
+                        width: 200,
+                        height: 200,
+                        decoration: BoxDecoration(
+                            color: appColors.whiteDark,
+                            borderRadius: BorderRadius.all(Radius.circular(10))
+                        ),
+                        child: PageView(
+                          controller: _pageControllerForDialog,
+                          physics: NeverScrollableScrollPhysics(),
+                          children: [
+                            Column(
+                              mainAxisAlignment: MainAxisAlignment.spaceAround,
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              children: [
+                                Icon(Icons.bookmark_add_rounded,color: appColors.blueDark,size: 64,),
+                                Text("Bu ilanı\nkaydetmek\nistiyor musunuz? \nSadece siz göreceksiniz",style: TextStyle(
+                                    color: appColors.black,
+                                    fontSize: 15,
+                                    height: 1,
+                                    fontFamily: "FontNormal",
+                                    decoration: TextDecoration.none
+                                ),textAlign: TextAlign.center,
+                                ),
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                                  children: [
+                                    GestureDetector(
+                                      onTap: () {
+                                        Navigator.pop(context);
+                                      },
+                                      child: Container(
+                                        decoration: BoxDecoration(
+                                            color: appColors.blueDark,
+                                            borderRadius: BorderRadius.all(Radius.circular(5))
+                                        ),
+                                        child: Padding(
+                                          padding: const EdgeInsets.symmetric(horizontal: 8,vertical: 4),
+                                          child: Text("Geri dön",style: TextStyle(
+                                              color: appColors.white,
+                                              fontSize: 14,
+                                              fontFamily: "FontNormal",
+                                              decoration: TextDecoration.none
+                                          ),),
+                                        ),
+                                      ),
+                                    ),
+                                    GestureDetector(
+                                      onTap: () async{
+                                        _pageControllerForDialog.nextPage(duration: Duration(milliseconds: 300), curve: Curves.bounceInOut);
 
-                  QuerySnapshot userQuery = await FirebaseFirestore.instance.collection('users').where('id', isEqualTo: userCurrent!.id).get();
-                  if (userQuery.docs.isNotEmpty) {
-                    DocumentSnapshot userDoc = userQuery.docs.first;
-                    DocumentReference userRef = FirebaseFirestore.instance.collection('users').doc(userDoc.id);
-                    await userRef.update({
-                      'advertList': FieldValue.arrayUnion([userData.supplyInfo.id]),
-                    });
-                  } else {
-                    print('Kullanıcı bulunamadı');
-                  }
+                                        String status = await FirestoreService().advertSave(userData.supplyInfo);
+                                        if(status == "Ok"){
+                                          _pageControllerForDialog.nextPage(duration: Duration(milliseconds: 300), curve: Curves.bounceInOut);
+                                        }else{
+                                          _pageControllerForDialog.jumpToPage(3);
+                                        }
+                                      },
+                                      child: Container(
+                                        decoration: BoxDecoration(
+                                            color: appColors.blueDark,
+                                            borderRadius: BorderRadius.all(Radius.circular(5))
+                                        ),
+                                        child: Padding(
+                                          padding: const EdgeInsets.symmetric(horizontal: 8,vertical: 4),
+                                          child: Text("Evet",style: TextStyle(
+                                              color: appColors.white,
+                                              fontSize: 14,
+                                              fontFamily: "FontNormal",
+                                              decoration: TextDecoration.none
+                                          ),),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                )
+                              ],
+                            ),
+                            Center(
+                              child: CircularProgressIndicator(
+                                color: appColors.blueLight,
+                              ),),
+                            Column(
+                              mainAxisAlignment: MainAxisAlignment.spaceAround,
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              children: [
+                                Icon(Icons.check_circle_outline_rounded,color: appColors.orange,size: 64,),
+                                Text("İlan\nkaydedildi",style: TextStyle(
+                                    color: appColors.blackLight,
+                                    fontSize: 16,
+                                    height: 1,
+                                    fontFamily: "FontNormal",
+                                    decoration: TextDecoration.none
+                                ),textAlign: TextAlign.center,
+                                ),
+                                GestureDetector(
+                                  onTap: () {
+                                    Navigator.pop(context);
+                                  },
+                                  child: Container(
+                                    decoration: BoxDecoration(
+                                        color: appColors.orange,
+                                        borderRadius: BorderRadius.all(Radius.circular(5))
+                                    ),
+                                    child: Padding(
+                                      padding: const EdgeInsets.symmetric(horizontal: 8,vertical: 4),
+                                      child: Text("Tamam",style: TextStyle(
+                                          color: appColors.white,
+                                          fontSize: 14,
+                                          fontFamily: "FontNormal",
+                                          decoration: TextDecoration.none
+                                      ),),
+                                    ),
+                                  ),
+                                )
+                              ],
+                            ),
+                            Column(
+                              mainAxisAlignment: MainAxisAlignment.spaceAround,
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              children: [
+                                Icon(Icons.error_outline_rounded,color: appColors.pink,size: 64,),
+                                Text("Bir hata\nmeydana geldi",style: TextStyle(
+                                    color: appColors.blackLight,
+                                    fontSize: 16,
+                                    height: 1,
+                                    fontFamily: "FontNormal",
+                                    decoration: TextDecoration.none
+                                ),textAlign: TextAlign.center,
+                                ),
+                                GestureDetector(
+                                  onTap: () {
+                                    Navigator.pop(context);
+                                  },
+                                  child: Container(
+                                    decoration: BoxDecoration(
+                                        color: appColors.blackLight,
+                                        borderRadius: BorderRadius.all(Radius.circular(5))
+                                    ),
+                                    child: Padding(
+                                      padding: const EdgeInsets.symmetric(horizontal: 8,vertical: 4),
+                                      child: Text("Tamam",style: TextStyle(
+                                          color: appColors.white,
+                                          fontSize: 14,
+                                          fontFamily: "FontNormal",
+                                          decoration: TextDecoration.none
+                                      ),),
+                                    ),
+                                  ),
+                                )
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                  barrierDismissible: false,
+                );
+              },
+              child: getPanelButton("Kaydet",15,"FontBold",appColors.blue,appColors.white)),
+          GestureDetector(
+            onTap: () async {
+              showDialog(
+                context: context,
+                builder: (BuildContext context) {
+                  return Center(
+                    child: Container(
+                      width: 200,
+                      height: 200,
+                      decoration: BoxDecoration(
+                          color: appColors.whiteDark,
+                          borderRadius: BorderRadius.all(Radius.circular(10))
+                      ),
+                      child: PageView(
+                        controller: _pageControllerForDialog,
+                        physics: NeverScrollableScrollPhysics(),
+                        children: [
+                          Column(
+                            mainAxisAlignment: MainAxisAlignment.spaceAround,
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: [
+                              Icon(Icons.share_rounded,color: appColors.blueDark,size: 64,),
+                              Text("Bu ilan\nsayfanızda\npaylaşılsın mı?",style: TextStyle(
+                                  color: appColors.black,
+                                  fontSize: 16,
+                                  height: 1,
+                                  fontFamily: "FontNormal",
+                                  decoration: TextDecoration.none
+                              ),textAlign: TextAlign.center,
+                              ),
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                                children: [
+                                  GestureDetector(
+                                    onTap: () {
+                                      Navigator.pop(context);
+                                    },
+                                    child: Container(
+                                      decoration: BoxDecoration(
+                                          color: appColors.blueDark,
+                                          borderRadius: BorderRadius.all(Radius.circular(5))
+                                      ),
+                                      child: Padding(
+                                        padding: const EdgeInsets.symmetric(horizontal: 8,vertical: 4),
+                                        child: Text("Geri dön",style: TextStyle(
+                                            color: appColors.white,
+                                            fontSize: 14,
+                                            fontFamily: "FontNormal",
+                                            decoration: TextDecoration.none
+                                        ),),
+                                      ),
+                                    ),
+                                  ),
+                                  GestureDetector(
+                                    onTap: () async{
+                                      _pageControllerForDialog.nextPage(duration: Duration(milliseconds: 300), curve: Curves.bounceInOut);
 
-                } catch (e) {
-                  print('Hata oluştu: $e');
-                }
-                try {
-                  await FirebaseFirestore.instance.collection('supplies').doc(userData.supplyInfo.id).update({
-                    'sharersIdList': FieldValue.arrayUnion([user!.uid]),
-                  });
-                } catch (e) {
-                  print('Hata oluştu: $e');
-                }
+                                      String status = await FirestoreService().advertShare(userData.supplyInfo);
+                                      if(status == "Ok"){
+                                        _pageControllerForDialog.nextPage(duration: Duration(milliseconds: 300), curve: Curves.bounceInOut);
+                                      }else{
+                                        _pageControllerForDialog.jumpToPage(3);
+                                      }
+                                    },
+                                    child: Container(
+                                      decoration: BoxDecoration(
+                                          color: appColors.blueDark,
+                                          borderRadius: BorderRadius.all(Radius.circular(5))
+                                      ),
+                                      child: Padding(
+                                        padding: const EdgeInsets.symmetric(horizontal: 8,vertical: 4),
+                                        child: Text("Evet",style: TextStyle(
+                                            color: appColors.white,
+                                            fontSize: 14,
+                                            fontFamily: "FontNormal",
+                                            decoration: TextDecoration.none
+                                        ),),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              )
+                            ],
+                          ),
+                          Center(
+                            child: CircularProgressIndicator(
+                              color: appColors.blueLight,
+                            ),),
+                          Column(
+                            mainAxisAlignment: MainAxisAlignment.spaceAround,
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: [
+                              Icon(Icons.check_circle_outline_rounded,color: appColors.orange,size: 64,),
+                              Text("İlan\nsayfanızda\npaylaşıldı",style: TextStyle(
+                                  color: appColors.blackLight,
+                                  fontSize: 16,
+                                  height: 1,
+                                  fontFamily: "FontNormal",
+                                  decoration: TextDecoration.none
+                              ),textAlign: TextAlign.center,
+                              ),
+                              GestureDetector(
+                                onTap: () {
+                                  Navigator.pop(context);
+                                },
+                                child: Container(
+                                  decoration: BoxDecoration(
+                                      color: appColors.orange,
+                                      borderRadius: BorderRadius.all(Radius.circular(5))
+                                  ),
+                                  child: Padding(
+                                    padding: const EdgeInsets.symmetric(horizontal: 8,vertical: 4),
+                                    child: Text("Tamam",style: TextStyle(
+                                        color: appColors.white,
+                                        fontSize: 14,
+                                        fontFamily: "FontNormal",
+                                        decoration: TextDecoration.none
+                                    ),),
+                                  ),
+                                ),
+                              )
+                            ],
+                          ),
+                          Column(
+                            mainAxisAlignment: MainAxisAlignment.spaceAround,
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: [
+                              Icon(Icons.error_outline_rounded,color: appColors.pink,size: 64,),
+                              Text("Bir hata\nmeydana geldi",style: TextStyle(
+                                  color: appColors.blackLight,
+                                  fontSize: 16,
+                                  height: 1,
+                                  fontFamily: "FontNormal",
+                                  decoration: TextDecoration.none
+                              ),textAlign: TextAlign.center,
+                              ),
+                              GestureDetector(
+                                onTap: () {
+                                  Navigator.pop(context);
+                                },
+                                child: Container(
+                                  decoration: BoxDecoration(
+                                      color: appColors.blackLight,
+                                      borderRadius: BorderRadius.all(Radius.circular(5))
+                                  ),
+                                  child: Padding(
+                                    padding: const EdgeInsets.symmetric(horizontal: 8,vertical: 4),
+                                    child: Text("Tamam",style: TextStyle(
+                                        color: appColors.white,
+                                        fontSize: 14,
+                                        fontFamily: "FontNormal",
+                                        decoration: TextDecoration.none
+                                    ),),
+                                  ),
+                                ),
+                              )
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                },
+                barrierDismissible: false,
+              );
             },
               child: getPanelButton("Paylaş",15,"FontBold",appColors.blue,appColors.white)),
           SizedBox(),
-          getPanelButton("BAŞVUR",18,"FontBold",appColors.orange,appColors.white),
+          GestureDetector(
+              onTap: () {
+                showDialog(
+                  context: context,
+                  builder: (BuildContext context) {
+                    return Center(
+                      child: Container(
+                        width: 200,
+                        height: 200,
+                        decoration: BoxDecoration(
+                            color: appColors.whiteDark,
+                            borderRadius: BorderRadius.all(Radius.circular(10))
+                        ),
+                        child: PageView(
+                          controller: _pageControllerForDialog,
+                          physics: NeverScrollableScrollPhysics(),
+                          children: [
+                            Column(
+                              mainAxisAlignment: MainAxisAlignment.spaceAround,
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              children: [
+                                Icon(Icons.add_rounded,color: appColors.blueDark,size: 64,),
+                                Text("Bu ilana\nbaşvuru\nyapılsın mı?",style: TextStyle(
+                                    color: appColors.black,
+                                    fontSize: 16,
+                                    height: 1,
+                                    fontFamily: "FontNormal",
+                                    decoration: TextDecoration.none
+                                ),textAlign: TextAlign.center,
+                                ),
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                                  children: [
+                                    GestureDetector(
+                                      onTap: () {
+                                        Navigator.pop(context);
+                                      },
+                                      child: Container(
+                                        decoration: BoxDecoration(
+                                            color: appColors.blueDark,
+                                            borderRadius: BorderRadius.all(Radius.circular(5))
+                                        ),
+                                        child: Padding(
+                                          padding: const EdgeInsets.symmetric(horizontal: 8,vertical: 4),
+                                          child: Text("Geri dön",style: TextStyle(
+                                              color: appColors.white,
+                                              fontSize: 14,
+                                              fontFamily: "FontNormal",
+                                              decoration: TextDecoration.none
+                                          ),),
+                                        ),
+                                      ),
+                                    ),
+                                    GestureDetector(
+                                      onTap: () async{
+                                        _pageControllerForDialog.nextPage(duration: Duration(milliseconds: 300), curve: Curves.bounceInOut);
+
+                                        String status = await FirestoreService().advertApply(userData.supplyInfo);
+                                        if(status == "Ok"){
+                                          _pageControllerForDialog.nextPage(duration: Duration(milliseconds: 300), curve: Curves.bounceInOut);
+                                        }else{
+                                          _pageControllerForDialog.jumpToPage(3);
+                                        }
+                                      },
+                                      child: Container(
+                                        decoration: BoxDecoration(
+                                            color: appColors.blueDark,
+                                            borderRadius: BorderRadius.all(Radius.circular(5))
+                                        ),
+                                        child: Padding(
+                                          padding: const EdgeInsets.symmetric(horizontal: 8,vertical: 4),
+                                          child: Text("Evet",style: TextStyle(
+                                              color: appColors.white,
+                                              fontSize: 14,
+                                              fontFamily: "FontNormal",
+                                              decoration: TextDecoration.none
+                                          ),),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                )
+                              ],
+                            ),
+                            Center(
+                              child: CircularProgressIndicator(
+                                color: appColors.blueLight,
+                              ),),
+                            Column(
+                              mainAxisAlignment: MainAxisAlignment.spaceAround,
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              children: [
+                                Icon(Icons.check_circle_outline_rounded,color: appColors.orange,size: 64,),
+                                Text("Başvuru yapıldı.\nİlan sahibine\niletişim bilgileriniz\ngönderildi",style: TextStyle(
+                                    color: appColors.blackLight,
+                                    fontSize: 16,
+                                    height: 1,
+                                    fontFamily: "FontNormal",
+                                    decoration: TextDecoration.none
+                                ),textAlign: TextAlign.center,
+                                ),
+                                GestureDetector(
+                                  onTap: () {
+                                    Navigator.pop(context);
+                                  },
+                                  child: Container(
+                                    decoration: BoxDecoration(
+                                        color: appColors.orange,
+                                        borderRadius: BorderRadius.all(Radius.circular(5))
+                                    ),
+                                    child: Padding(
+                                      padding: const EdgeInsets.symmetric(horizontal: 8,vertical: 4),
+                                      child: Text("Tamam",style: TextStyle(
+                                          color: appColors.white,
+                                          fontSize: 14,
+                                          fontFamily: "FontNormal",
+                                          decoration: TextDecoration.none
+                                      ),),
+                                    ),
+                                  ),
+                                )
+                              ],
+                            ),
+                            Column(
+                              mainAxisAlignment: MainAxisAlignment.spaceAround,
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              children: [
+                                Icon(Icons.error_outline_rounded,color: appColors.pink,size: 64,),
+                                Text("Bir hata\nmeydana geldi",style: TextStyle(
+                                    color: appColors.blackLight,
+                                    fontSize: 16,
+                                    height: 1,
+                                    fontFamily: "FontNormal",
+                                    decoration: TextDecoration.none
+                                ),textAlign: TextAlign.center,
+                                ),
+                                GestureDetector(
+                                  onTap: () {
+                                    Navigator.pop(context);
+                                  },
+                                  child: Container(
+                                    decoration: BoxDecoration(
+                                        color: appColors.blackLight,
+                                        borderRadius: BorderRadius.all(Radius.circular(5))
+                                    ),
+                                    child: Padding(
+                                      padding: const EdgeInsets.symmetric(horizontal: 8,vertical: 4),
+                                      child: Text("Tamam",style: TextStyle(
+                                          color: appColors.white,
+                                          fontSize: 14,
+                                          fontFamily: "FontNormal",
+                                          decoration: TextDecoration.none
+                                      ),),
+                                    ),
+                                  ),
+                                )
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                  barrierDismissible: false,
+                );
+              },
+              child: getPanelButton("BAŞVUR",18,"FontBold",appColors.orange,appColors.white)),
         ],
       ),
     );

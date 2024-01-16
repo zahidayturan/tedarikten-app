@@ -45,49 +45,55 @@ class _ActiveAdvertsState extends ConsumerState<ActiveAdverts> {
   }
 
   Widget getItems(){
-      return Expanded(
-        child: FutureBuilder<List<CombinedInfo>>(
-          future: FirestoreService().getActiveSupplyDataFromFirestoreAllUser(user!.uid),
-          builder: (context, snapshot) {
-            if (snapshot.connectionState == ConnectionState.waiting) {
-              return Container(
-                  height: 40,
-                  width: 40,
-                  child: Center(child: CircularProgressIndicator(color: appColors.blueDark,)));
-            } else if (snapshot.hasError) {
-              return Center(child: Text("Bir sorun oluştu",style:  TextStyle(color: appColors.blueDark),));
-            }else{
-              List<CombinedInfo>? supplyDataList = snapshot.data;
-              if(supplyDataList!.isEmpty){
-                return Center(
-                  child: RichText(
-                    textAlign: TextAlign.center,
-                    text: TextSpan(
-                      style: TextStyle(
-                          fontSize: 15,
-                          height: 1,
-                          color: appColors.blueDark
-                      ),
-                      children: <TextSpan>[
-                        TextSpan(text: 'Henüz', style: TextStyle(fontFamily: "FontNormal")),
-                        TextSpan(text: ' paylaşımınız ',style: TextStyle(fontFamily: "FontBold")),
-                        TextSpan(text: 'yok',style: TextStyle(fontFamily: "FontNormal")),
-                      ],
-                    ),
-                  ),
-                );
+      if(user != null){
+        return Expanded(
+          child: FutureBuilder<List<CombinedInfo>>(
+            future: FirestoreService().getActiveSupplyDataFromFirestoreAllUser(user!.uid),
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return Container(
+                    height: 40,
+                    width: 40,
+                    child: Center(child: CircularProgressIndicator(color: appColors.blueDark,)));
+              } else if (snapshot.hasError) {
+                return Center(child: Text("Bir sorun oluştu",style:  TextStyle(color: appColors.blueDark),));
               }else{
-                return ListView.builder(
-                  physics: BouncingScrollPhysics(),
-                  itemCount: supplyDataList.length,
-                  itemBuilder: (context, index) {
-                    return getPostContainer(supplyDataList[index]); },
-                );
+                List<CombinedInfo>? supplyDataList = snapshot.data;
+                if(supplyDataList!.isEmpty){
+                  return Center(
+                    child: RichText(
+                      textAlign: TextAlign.center,
+                      text: TextSpan(
+                        style: TextStyle(
+                            fontSize: 15,
+                            height: 1,
+                            color: appColors.blueDark
+                        ),
+                        children: <TextSpan>[
+                          TextSpan(text: 'Henüz', style: TextStyle(fontFamily: "FontNormal")),
+                          TextSpan(text: ' paylaşımınız ',style: TextStyle(fontFamily: "FontBold")),
+                          TextSpan(text: 'yok',style: TextStyle(fontFamily: "FontNormal")),
+                        ],
+                      ),
+                    ),
+                  );
+                }else{
+                  return ListView.builder(
+                    physics: BouncingScrollPhysics(),
+                    itemCount: supplyDataList.length,
+                    itemBuilder: (context, index) {
+                      return getPostContainer(supplyDataList[index]); },
+                  );
+                }
               }
-            }
-          },
-        ),
-      );
+            },
+          ),
+        );
+      }else{
+        return Expanded(
+          child: Center(child: Text("Giriş yaptıktan sonra\nilan görüntüleyebilirsiniz")),
+        );
+      }
   }
 
   Widget getPostContainer(CombinedInfo data) {
