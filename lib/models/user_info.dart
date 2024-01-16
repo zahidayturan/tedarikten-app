@@ -12,6 +12,7 @@ class TUserInfo {
   List? advertList;
   List? companyList;
   List? registeredList;
+  List? appliedList;
 
   TUserInfo({
     required this.id,
@@ -26,6 +27,7 @@ class TUserInfo {
     this.advertList,
     this.companyList,
     this.registeredList,
+    this.appliedList
   });
 
   factory TUserInfo.fromJson(Map<String, dynamic> json) {
@@ -42,6 +44,7 @@ class TUserInfo {
       advertList: json['advertList'] ?? '',
       companyList: json['companyList'] ?? '',
       registeredList: json['registeredList'] ?? '',
+      appliedList: json['appliedList'] ?? '',
     );
   }
 
@@ -59,6 +62,7 @@ class TUserInfo {
       'advertList': advertList,
       'companyList': companyList,
       'registeredList': registeredList,
+      'appliedList': appliedList,
     };
   }
 }
