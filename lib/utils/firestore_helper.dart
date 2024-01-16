@@ -1,5 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/material.dart';
 import 'package:tedarikten/models/company_info.dart';
+import 'package:tedarikten/models/notification_info.dart';
 import 'package:tedarikten/models/supply_info.dart';
 import 'package:tedarikten/models/user_info.dart';
 import 'package:tedarikten/models/combined_info.dart';
@@ -40,6 +43,14 @@ class FirestoreService {
     }
   }
 
+  Future<void> addNotificationToFirestore(NotificationInfo data) async {
+    try {
+      await FirebaseFirestore.instance.collection('notifications').add(data.toJson());
+    } catch (e) {
+      print('Kayıt hatası: $e');
+    }
+  }
+
 
 
   Future<void> addAdvertToFirestore(SupplyInfo supply) async {
@@ -66,6 +77,50 @@ class FirestoreService {
     }
   }
 
+  Future<String> deleteSupply(String documentId, String uid, String otherUserId) async {
+    try {
+      QuerySnapshot userQuerySnapshot = await _firestore
+          .collection('users')
+          .where('id', isEqualTo: uid)
+          .get();
+
+      var userDoc = userQuerySnapshot.docs[0];
+      var advertList = userDoc['advertList'];
+      advertList.remove(documentId);
+
+      await userDoc.reference.update({
+        'advertList': advertList,
+      });
+
+      if (uid == otherUserId) {
+        await _firestore.collection('supplies').doc(documentId).delete();
+      }else if(uid != otherUserId){
+
+        QuerySnapshot suppliesQuerySnapshot = await _firestore
+            .collection('supplies')
+            .where('id', isEqualTo: documentId)
+            .get();
+
+        var suppliesDoc = suppliesQuerySnapshot.docs[0];
+        var supplyShareList = suppliesDoc['sharersIdList'];
+        supplyShareList.remove(uid);
+        print(uid);
+
+        await suppliesDoc.reference.update({
+          'sharersIdList': supplyShareList,
+        });
+      }else{
+
+      }
+
+      print('Belge başarıyla silindi.');
+      return "Ok";
+    } catch (e) {
+      print('Belge silinirken bir hata oluştu: $e');
+      return "Error";
+    }
+  }
+
   Future<List<CombinedInfo>> getSupplyDataFromFirestore(String userId) async {
     late List<CombinedInfo> userDataList = [];
     try {
@@ -77,15 +132,15 @@ class FirestoreService {
 
         var advertList = userQuerySnapshot.docs[0]['advertList'];
 
-
+/*
         var suppliesQuerySnapshot = await FirebaseFirestore.instance
             .collection('supplies')
             .where(FieldPath.documentId, whereIn: advertList)
             .get();
-
-        for (var document in suppliesQuerySnapshot.docs) {
+*/
+       /* for (var document in suppliesQuerySnapshot.docs) {
           print(document.data());
-        }
+        }*/
 
       var querySnapshotForSupplies = await FirebaseFirestore.instance
           .collection('supplies')
@@ -210,4 +265,71 @@ class FirestoreService {
   }
 
 
-}
+  Future<String> advertShare(SupplyInfo supply) async {
+    User? user = FirebaseAuth.instance.currentUser;
+
+    try {
+      TUserInfo? userCurrent = await FirestoreService().getUserInfo(user!.uid);
+      QuerySnapshot userQuery =
+      await FirebaseFirestore.instance.collection('users').where('id', isEqualTo: userCurrent!.id).get();
+
+      if (userQuery.docs.isNotEmpty) {
+        DocumentSnapshot userDoc = userQuery.docs.first;
+        DocumentReference userRef = FirebaseFirestore.instance.collection('users').doc(userDoc.id);
+
+        await userRef.update({
+          'advertList': FieldValue.arrayUnion([supply.id]),
+        });
+        await addNotificationToFirestore(NotificationInfo(title: "ilanını paylaştı",date: DateTime.now().toString(),isRead: false,senderId: user!.uid,userId: supply.userId));
+      } else {
+        print('Kullanıcı bulunamadı');
+      }
+    } catch (e) {
+      return 'Error';
+    }
+
+    try {
+      await FirebaseFirestore.instance.collection('supplies').doc(supply.id).update({
+        'sharersIdList': FieldValue.arrayUnion([user!.uid]),
+      });
+      return "Ok";
+    } catch (e) {
+      return 'Error';
+    }
+  }
+
+  Future<String> advertSave(SupplyInfo supply) async {
+    User? user = FirebaseAuth.instance.currentUser;
+
+    try {
+      TUserInfo? userCurrent = await FirestoreService().getUserInfo(user!.uid);
+      QuerySnapshot userQuery =
+      await FirebaseFirestore.instance.collection('users').where('id', isEqualTo: userCurrent!.id).get();
+
+      if (userQuery.docs.isNotEmpty) {
+        DocumentSnapshot userDoc = userQuery.docs.first;
+        DocumentReference userRef = FirebaseFirestore.instance.collection('users').doc(userDoc.id);
+
+        await userRef.update({
+          'registeredList': FieldValue.arrayUnion([supply.id]),
+        });
+
+        //registrantsIdList
+      } else {
+        print('Kullanıcı bulunamadı');
+      }
+    } catch (e) {
+      return 'Error';
+    }
+
+    try {
+      await FirebaseFirestore.instance.collection('supplies').doc(supply.id).update({
+        'registrantsIdList': FieldValue.arrayUnion([user!.uid]),
+      });
+      return "Ok";
+    } catch (e) {
+      return 'Error';
+    }
+  }
+
+  }

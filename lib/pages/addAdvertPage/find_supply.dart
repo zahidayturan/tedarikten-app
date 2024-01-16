@@ -240,7 +240,12 @@ class _FindSupplyState extends ConsumerState<FindSupply> {
                   if(minDeliveryTimeSupplyController.text.isNotEmpty){
                     amount = int.parse(minDeliveryTimeSupplyController.text);
                   }
-                 await firestoreService.addAdvertToFirestore(SupplyInfo(type: typeSupplyController.text, name: nameSupplyController.text, description: descriptionSupplyController.text, dateFirst: firstDate.toString(), dateLast: lastDate.toString(), amount: amount, minTime: minTime, location: locationSupplyController.text, status: status,sharingDate: sharingDate,editingDate: editingDate,companyId: companyId, documentId: "0", sharersIdList: [],registrantsIdList: [],applicantsIdList: [],userId: user!.uid));
+
+                  String locationController = locationSupplyController.text;
+                  if(locationSupplyController.text == "Şehir Seçin"){
+                    locationController = "Eklenmemiş";
+                  }
+                 await firestoreService.addAdvertToFirestore(SupplyInfo(type: typeSupplyController.text, name: nameSupplyController.text, description: descriptionSupplyController.text, dateFirst: firstDate.toString(), dateLast: lastDate.toString(), amount: amount, minTime: minTime, location: locationController, status: status,sharingDate: sharingDate,editingDate: editingDate,companyId: companyId, documentId: "0", sharersIdList: [],registrantsIdList: [],applicantsIdList: [],userId: user!.uid));
                 Navigator.pop(context);
                   ref.read(customNavBarRiverpod).setCurrentIndex(0);
                 }else{

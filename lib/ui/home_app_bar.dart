@@ -3,6 +3,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:tedarikten/constants/app_colors.dart';
+import 'package:tedarikten/pages/notifications_page.dart';
 import 'package:tedarikten/pages/profileInfoPage/profile_info_page.dart';
 import 'package:tedarikten/utils/firestore_helper.dart';
 import '../riverpod_management.dart';
@@ -93,7 +94,10 @@ class HomeAppBar extends ConsumerWidget implements  PreferredSizeWidget{
             padding: const EdgeInsets.only(left: 4,right: 4),
             child: GestureDetector(
               onTap: () {
-
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => NotificationsPage()),
+                );
               },
               child: Container(
                 width: 38,
