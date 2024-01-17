@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:tedarikten/constants/app_colors.dart';
+import 'package:tedarikten/models/application_supply_info.dart';
 import 'package:tedarikten/models/combined_info.dart';
 import 'package:tedarikten/models/notification_info.dart';
 import 'package:tedarikten/models/user_info.dart';
@@ -12,7 +13,13 @@ import 'package:tedarikten/riverpod_management.dart';
 import 'package:tedarikten/utils/firestore_helper.dart';
 
 class SupplyDetailsPage extends ConsumerStatefulWidget {
-  const SupplyDetailsPage({Key? key}) : super(key: key);
+  late int mode;
+  /*
+  Mode 0 ise başkasının ilanı
+  Mode 1 ise kendi ilanın
+  Mode 2 ise ilana başvuran kişi
+   */
+  SupplyDetailsPage({Key? key,required this.mode}) : super(key: key,);
 
   @override
   ConsumerState<SupplyDetailsPage> createState() => _SupplyDetailsPageState();
@@ -45,7 +52,7 @@ class _SupplyDetailsPageState extends ConsumerState<SupplyDetailsPage> {
                     physics: BouncingScrollPhysics(),
                       child: details())),
             ),
-            controlButtons()
+            widget.mode == 0 ? controlButtons() : SizedBox()
           ],
         ),
       ),
@@ -450,7 +457,7 @@ class _SupplyDetailsPageState extends ConsumerState<SupplyDetailsPage> {
                                       onTap: () async{
                                         _pageControllerForDialog.nextPage(duration: Duration(milliseconds: 300), curve: Curves.bounceInOut);
 
-                                        String status = await FirestoreService().advertApply(userData.supplyInfo);
+                                        String status = await FirestoreService().advertApply(ApplicationSupplyInfo(applicantUserId: user!.uid, supplyId: userData.supplyInfo.id!, message: "title", date: DateTime.now().toString(), response: "Yanıt Bekleniyor"));
                                         if(status == "Ok"){
                                           _pageControllerForDialog.nextPage(duration: Duration(milliseconds: 300), curve: Curves.bounceInOut);
                                         }else{
@@ -828,6 +835,17 @@ class _SupplyDetailsPageState extends ConsumerState<SupplyDetailsPage> {
   }
 
   Widget userInfo(){
+    String userWho(){
+      if(widget.mode == 0){
+        return "İlan\nSahibi";
+      }else if(widget.mode == 1){
+        return "Sizin\nİlanınız";
+      }else if(widget.mode == 2){
+        return "İlana\nBaşvuran\nKişi";
+      }else{
+        return "İlan\nSahibi";
+      }
+    }
       return Padding(
         padding: const EdgeInsets.only(top: 16,bottom: 12),
         child: Row(
@@ -835,8 +853,8 @@ class _SupplyDetailsPageState extends ConsumerState<SupplyDetailsPage> {
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             SizedBox(
-                width: 80,
-                child: getText("İlan\nSahibi", 18, appColors.white, "fontBold",TextAlign.start)),
+                width: 84,
+                child: getText(userWho(), 17, appColors.white, "fontBold",TextAlign.start)),
             Column(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
@@ -855,7 +873,7 @@ class _SupplyDetailsPageState extends ConsumerState<SupplyDetailsPage> {
               ],
             ),
             SizedBox(
-                width: 80,
+                width: 84,
                 child: getText("${userData.userInfo.city}\n${userData.userInfo.country}", 15, appColors.white, "fontNormal",TextAlign.end)),
           ],
         ),
@@ -866,7 +884,11 @@ class _SupplyDetailsPageState extends ConsumerState<SupplyDetailsPage> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceAround,
      children: [
-       getPanelButton("Profile Git",14,"FontNormal",appColors.blueDark,appColors.white),
+       GestureDetector(
+           onTap: () {
+
+           },
+           child: getPanelButton(widget.mode == 1 ? "İlanı Düzenle" :"Profile Git",14,"FontNormal",appColors.blueDark,appColors.white)),
        //getPanelButton("Mesaj Gönder")
      ],
     );

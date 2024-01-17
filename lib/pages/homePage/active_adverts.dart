@@ -274,10 +274,14 @@ class _ActiveAdvertsState extends ConsumerState<ActiveAdverts> {
                 Spacer(),
                 GestureDetector(
                   onTap: () {
+                    int mode= 0;
+                    if(user!.uid == data.supplyInfo.userId){
+                      mode = 1;
+                    }
                     ref.read(profilePageRiverpod).setSupplyDetailsId(data);
                     Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (context) => SupplyDetailsPage()),
+                      MaterialPageRoute(builder: (context) => SupplyDetailsPage(mode: mode,)),
                     );
                   },
                   child: Container(

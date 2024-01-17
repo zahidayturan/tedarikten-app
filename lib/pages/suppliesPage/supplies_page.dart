@@ -1,13 +1,10 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:tedarikten/constants/app_colors.dart';
-import 'package:tedarikten/models/user_info.dart';
 import 'package:tedarikten/pages/login_page.dart';
-import 'package:tedarikten/pages/profileInfoPage/my_active_posts.dart';
-import 'package:tedarikten/pages/profileInfoPage/my_posts.dart';
+import 'package:tedarikten/pages/suppliesPage/my_application_supplies.dart';
+import 'package:tedarikten/pages/suppliesPage/other_applications._supplies.dart';
 import 'package:tedarikten/riverpod_management.dart';
 import 'package:tedarikten/utils/firestore_helper.dart';
 
@@ -24,7 +21,7 @@ class _SuppliesPage extends ConsumerState<SuppliesPage> {
   @override
   void initState(){
     super.initState();
-    _pageViewController = PageController(initialPage: ref.read(profilePageRiverpod).switchCurrentIndex);
+    _pageViewController = PageController(initialPage: ref.read(suppliesPageRiverpod).switchCurrentIndex);
   }
 
 
@@ -32,7 +29,7 @@ class _SuppliesPage extends ConsumerState<SuppliesPage> {
 
   Widget build(BuildContext context) {
     User? user = FirebaseAuth.instance.currentUser;
-    var read = ref.read(profilePageRiverpod);
+    var read = ref.read(suppliesPageRiverpod);
     int switchIndex = read.switchCurrentIndex;
     var size = MediaQuery.of(context).size;
     if(user != null){
@@ -55,6 +52,14 @@ class _SuppliesPage extends ConsumerState<SuppliesPage> {
                     });
                   },
                   children: [
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 10),
+                      child: MyApplicationsSupply(),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 10),
+                      child: OtherApplicationsSupply(),
+                    )
 
                   ]),
             ),
