@@ -267,7 +267,7 @@ class FirestoreService {
 
 
   Future<List<CombinedInfo>> getActiveSupplyDataFromFirestoreAllUser(String userId) async {
-    late List<CombinedInfo> userDataList = [];
+    late List<CombinedInfo?> userDataList = [];
     try {
       var querySnapshotForSupplies = await FirebaseFirestore.instance
           .collection('supplies')
@@ -281,40 +281,47 @@ class FirestoreService {
 
           String companyId = supplyData['companyId'];
           String userIdFromSupply = supplyData['userId'];
+          DateTime dateLast = DateTime.parse(supplyData['dateLast']);
 
-          Map<String, dynamic> companyData = {};
-          if (companyId != "0") {
-            DocumentSnapshot companyDoc = await FirebaseFirestore.instance
-                .collection('companies')
-                .doc(companyId)
+          DateTime today = DateTime.now();
+
+          if (dateLast.isAfter(today)) {
+            Map<String, dynamic> companyData = {};
+            if (companyId != "0") {
+              DocumentSnapshot companyDoc = await FirebaseFirestore.instance
+                  .collection('companies')
+                  .doc(companyId)
+                  .get();
+              companyData = companyDoc.data() as Map<String, dynamic>;
+            }else{
+              CompanyInfo myDataInstance = CompanyInfo(
+                name: "",
+                location: "",
+                year: 11111,
+                phone: "",
+                address: "",
+                personNameSurname: "",
+                personEmail: "",
+                userId: "",
+              );
+              companyData = myDataInstance.toJson();
+            }
+
+            QuerySnapshot userQuerySnapshot = await FirebaseFirestore.instance
+                .collection('users')
+                .where("id", isEqualTo: userIdFromSupply)
                 .get();
-            companyData = companyDoc.data() as Map<String, dynamic>;
+
+            Map<String, dynamic> userData = userQuerySnapshot.docs.first.data() as Map<String, dynamic>;
+
+            return CombinedInfo.fromFirestore(supplyData, companyData, userData);
           }else{
-            CompanyInfo myDataInstance = CompanyInfo(
-              name: "",
-              location: "",
-              year: 11111,
-              phone: "",
-              address: "",
-              personNameSurname: "",
-              personEmail: "",
-              userId: "",
-            );
-            companyData = myDataInstance.toJson();
+            return null;
           }
-
-          QuerySnapshot userQuerySnapshot = await FirebaseFirestore.instance
-              .collection('users')
-              .where("id", isEqualTo: userIdFromSupply)
-              .get();
-
-          Map<String, dynamic> userData = userQuerySnapshot.docs.first.data() as Map<String, dynamic>;
-
-          return CombinedInfo.fromFirestore(supplyData, companyData, userData);
         }).toList());
 
         print('Gelen CombinedInfo Listesi: $userDataList');
-        return userDataList;
+        return userDataList.where((element) => element != null).cast<CombinedInfo>().toList();
       } else {
         print('Belge bulunamadı.');
         return [];
@@ -683,5 +690,68 @@ class FirestoreService {
 
     return notificationsList;
   }
+
+  Future<List<CombinedInfo>> searchSupply(String searchText) async {
+    try {
+      if (searchText.isNotEmpty) {
+        print("Text : $searchText");
+
+        QuerySnapshot querySnapshot = await _firestore
+            .collection('supplies')
+            .where('name', isGreaterThanOrEqualTo: searchText)
+            .where('name', isLessThanOrEqualTo: '$searchText\uf8ff')
+            .get();
+
+        if (querySnapshot.docs.isNotEmpty) {
+          List<DocumentSnapshot> documents = querySnapshot.docs;
+          List<CombinedInfo> userDataList = await Future.wait(documents.map((doc) async {
+            Map<String, dynamic> supplyData = doc.data() as Map<String, dynamic>;
+
+            String companyId = supplyData['companyId'] ?? '';
+            String userIdFromSupply = supplyData['userId'] ?? '';
+
+            Map<String, dynamic> companyData = {};
+            if (companyId.isNotEmpty) {
+              DocumentSnapshot companyDoc = await FirebaseFirestore.instance
+                  .collection('companies')
+                  .doc(companyId)
+                  .get();
+              companyData = companyDoc.data() as Map<String, dynamic>;
+            } else {
+              CompanyInfo myDataInstance = CompanyInfo(
+                name: "",
+                location: "",
+                year: 11111,
+                phone: "",
+                address: "",
+                personNameSurname: "",
+                personEmail: "",
+                userId: "",
+              );
+              companyData = myDataInstance.toJson();
+            }
+
+            QuerySnapshot userQuerySnapshot = await FirebaseFirestore.instance
+                .collection('users')
+                .where("id", isEqualTo: userIdFromSupply)
+                .get();
+
+
+              Map<String, dynamic> userData = userQuerySnapshot.docs.first.data() as Map<String, dynamic>;
+
+              return CombinedInfo.fromFirestore(supplyData, companyData, userData);
+            }
+          ).toList());
+
+          return userDataList;
+        }
+      }
+    } catch (e) {
+      print('Hata oluştu: $e');
+    }
+
+    return [];
+  }
+
 
 }
