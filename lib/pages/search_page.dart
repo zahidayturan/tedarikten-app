@@ -1,4 +1,3 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -9,34 +8,38 @@ import 'package:tedarikten/models/supply_info.dart';
 import 'package:tedarikten/riverpod_management.dart';
 import 'package:tedarikten/utils/firestore_helper.dart';
 
-
-class MyActivePosts extends ConsumerStatefulWidget {
-  late int mode;
-  late String userId;
-  MyActivePosts({Key? key,required this.mode, required this.userId}) : super(key: key);
+class SearchPage extends ConsumerStatefulWidget {
+  const SearchPage({Key? key}) : super(key: key);
 
   @override
-  ConsumerState<MyActivePosts> createState() => _MyActivePostsState();
+  ConsumerState<SearchPage> createState() => _SearchPageState();
 }
 
-class _MyActivePostsState extends ConsumerState<MyActivePosts> {
+class _SearchPageState extends ConsumerState<SearchPage> {
   User? user = FirebaseAuth.instance.currentUser;
   @override
-  void initState() {
-    super.initState();
+  void dispose() {
+    super.dispose();
+  }
+  @override
+  Widget build(BuildContext context) {
+    var size = MediaQuery.of(context).size;
+    //ref.watch(homePageRiverpod).searchText;
+    var read = ref.read(homePageRiverpod);
+    String searchText = read.searchText;
+    return getResultInfo(context,searchText);
   }
 
-
-
-  Widget build(BuildContext context) {
+  Widget getResultInfo(BuildContext context,String searchText) {
+    var read = ref.read(homePageRiverpod);
     final appColors = AppColors();
-    if(user == null ){
+    if(user == null) {
       return Center(
         child: RichText(
           textAlign: TextAlign.center,
           text: TextSpan(
             children: <TextSpan>[
-              TextSpan(text: widget.mode == 0 ? 'Paylaşımlarınızı görmek için\n' : 'Paylaşımları görmek için\n', style: TextStyle(fontFamily: "FontNormal",color: appColors.black,fontSize: 15)),
+              TextSpan(text: 'Arama yapabilmek için', style: TextStyle(fontFamily: "FontNormal",color: appColors.black,fontSize: 15)),
               TextSpan(text: 'giriş yapmalısınız',style: TextStyle(fontFamily: "FontBold",color: appColors.blueDark,fontSize: 15)),
             ],
           ),
@@ -44,7 +47,7 @@ class _MyActivePostsState extends ConsumerState<MyActivePosts> {
       );
     }else{
       return FutureBuilder<List<CombinedInfo>>(
-        future: FirestoreService().getActiveSupplyDataFromFirestore(widget.userId),
+        future: FirestoreService().searchSupply(searchText),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return Container(
@@ -54,8 +57,8 @@ class _MyActivePostsState extends ConsumerState<MyActivePosts> {
           } else if (snapshot.hasError) {
             return Center(child: Text("Bir sorun oluştu",style:  TextStyle(color: appColors.blueDark),));
           }else{
-            List<CombinedInfo>? supplyDataList = snapshot.data;
-            if(supplyDataList!.isEmpty){
+            List<CombinedInfo> supplyDataList = snapshot.data!;
+            if(supplyDataList.isEmpty){
               return Center(
                 child: RichText(
                   textAlign: TextAlign.center,
@@ -66,37 +69,38 @@ class _MyActivePostsState extends ConsumerState<MyActivePosts> {
                         color: appColors.blueDark
                     ),
                     children: <TextSpan>[
-                      TextSpan(text: 'Henüz', style: TextStyle(fontFamily: "FontNormal")),
-                      TextSpan(text: widget.mode == 0 ? ' aktif ilanınız ' : ' aktif ilanı ',style: TextStyle(fontFamily: "FontBold")),
-                      TextSpan(text: 'yok',style: TextStyle(fontFamily: "FontNormal")),
+                      TextSpan(text: 'Sonuç\n', style: TextStyle(fontFamily: "FontNormal")),
+                      TextSpan(text: 'bulunamadı',style: TextStyle(fontFamily: "FontBold")),
                     ],
                   ),
                 ),
               );
             }else{
-              return ListView.builder(
-                physics: BouncingScrollPhysics(),
-                itemCount: supplyDataList.length,
-                itemBuilder: (context, index) {
-                  return getPostContainer(supplyDataList[index]); },
+              return Column(
+                children: [
+                  getText("${supplyDataList.length} Sonuç Bulundu", 15, "FontBold", appColors.blackLight, TextAlign.center),
+                  Expanded(
+                    child: ListView.builder(
+                      physics: BouncingScrollPhysics(),
+                      itemCount: supplyDataList.length,
+                      itemBuilder: (context, index) {
+                        return getPostContainer(supplyDataList[index]); },
+                    ),
+                  ),
+                ],
               );
             }
           }
         },
       );
     }
+
   }
 
   Widget getPostContainer(CombinedInfo data) {
     final appColors = AppColors();
 
-    String name = data.userInfo.name ?? "Kullanıcı";
-
     String dataStatus = data.supplyInfo.status != "" ? "${data.supplyInfo.status.split(" ")[0]}\n${data.supplyInfo.status.split(" ")[1]}" : "Tedarik\nPaylaşımı";
-
-    DateTime sharingDateTime = data.supplyInfo.sharingDate != "" ? DateTime.parse(data.supplyInfo.sharingDate) : DateTime.now();
-    String sharingDate = DateFormat('dd.MM.yyyy').format(sharingDateTime);
-    String sharingTime = DateFormat('HH:mm').format(sharingDateTime);
 
     DateTime firstDateTime = data.supplyInfo.dateFirst != "" ? DateTime.parse(data.supplyInfo.dateFirst) : DateTime.now();
     String firstDate = DateFormat('dd.MM.yyyy HH:mm').format(firstDateTime);
@@ -105,8 +109,6 @@ class _MyActivePostsState extends ConsumerState<MyActivePosts> {
 
     DateTime lastDateTime = data.supplyInfo.dateLast != "" ? DateTime.parse(data.supplyInfo.dateLast) : DateTime.now();
     String lastDate = DateFormat('dd.MM.yyyy HH:mm').format(lastDateTime);
-
-
 
     String getCompleteStatus(){
       if(data.supplyInfo.dateLast != "" && data.supplyInfo.dateFirst != ""){
@@ -152,13 +154,6 @@ class _MyActivePostsState extends ConsumerState<MyActivePosts> {
                   getText("${data.userInfo.name} ${data.userInfo.surname}", 14, "FontNormal", appColors.blackLight,TextAlign.start)
                 ],
               ),
-              Container(height: 16,width: 36,
-                padding: EdgeInsets.symmetric(horizontal: 6),
-                decoration: BoxDecoration(
-                    color: getStatusColor(),
-                    borderRadius: BorderRadius.all(Radius.circular(10))
-                ),
-                child: Image(color:appColors.white,fit: BoxFit.fitWidth,image: AssetImage("assets/icons/dots.png")),)
             ],
           ),
           Row(
@@ -258,6 +253,7 @@ class _MyActivePostsState extends ConsumerState<MyActivePosts> {
     return Text(text,
       textAlign: align,
       overflow: TextOverflow.ellipsis,
+      maxLines: 2,
       style: TextStyle(
           color: textColor,
           height: 1,

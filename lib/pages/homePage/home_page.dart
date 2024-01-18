@@ -8,6 +8,7 @@ import 'package:tedarikten/models/user_info.dart';
 import 'package:tedarikten/pages/homePage/active_adverts.dart';
 import 'package:tedarikten/pages/homePage/my_active_adverts.dart';
 import 'package:tedarikten/pages/login_page.dart';
+import 'package:tedarikten/pages/search_page.dart';
 import 'package:tedarikten/riverpod_management.dart';
 import 'package:tedarikten/ui/home_app_bar.dart';
 import 'package:tedarikten/ui/navigation_bar.dart';
@@ -25,6 +26,8 @@ class _MyHomePageState extends ConsumerState<HomePage> {
   @override
   Widget build(BuildContext context) {
     final appColors = AppColors();
+    var read = ref.read(homePageRiverpod);
+    ref.watch(homePageRiverpod).searchModeActivate;
     return SafeArea(
       child: Scaffold(
         backgroundColor: appColors.whiteDark,
@@ -34,13 +37,15 @@ class _MyHomePageState extends ConsumerState<HomePage> {
         drawerEnableOpenDragGesture: true,
         body: Padding(
           padding: const EdgeInsets.all(10.0),
-          child: Column(children: [
+          child: read.searchModeActivate == false ?
+          Column(children: [
             easyAccessContainer(),
             SizedBox(height: 16,),
             MyActiveAdverts(),
             SizedBox(height: 10,),
             Expanded(child: ActiveAdverts()),
-          ],),
+          ],) :
+          SearchPage(),
         )
       ),
     );

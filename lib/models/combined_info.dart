@@ -18,4 +18,5 @@ class CombinedInfo {
       userInfo: TUserInfo.fromJson(userInfo)
     );
   }
+
 }

@@ -18,4 +18,36 @@ class ProfilePageRiverpod extends ChangeNotifier {
     notifyListeners();
   }
 
+  CombinedInfo getCombinedInfo(){
+    return combinedInfo;
+  }
+
+  bool editingMode = false;
+  void setEditingMode(bool mode) {
+    editingMode = mode ;
+    notifyListeners();
+  }
+
+  String? type;
+  String? description;
+  void setType(String text) {
+    type = text ;
+    notifyListeners();
+  }
+  void setDescription(String text) {
+    description = text ;
+    notifyListeners();
+  }
+  void clear(){
+    type = null;
+    description = null;
+    notifyListeners();
+  }
+
+  int pushCounter = 0;
+  void setPushCounter(int counter) {
+    pushCounter = counter ;
+    notifyListeners();
+  }
+
 }

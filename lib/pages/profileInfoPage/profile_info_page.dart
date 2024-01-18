@@ -12,7 +12,8 @@ import 'package:tedarikten/riverpod_management.dart';
 import 'package:tedarikten/utils/firestore_helper.dart';
 
 class ProfilePage extends ConsumerStatefulWidget {
-  const ProfilePage({Key? key}) : super(key: key);
+  late int mode;
+  ProfilePage({Key? key,required this.mode}) : super(key: key);
   @override
   ConsumerState<ProfilePage> createState() => _ProfilePage();
 }
@@ -69,11 +70,11 @@ class _ProfilePage extends ConsumerState<ProfilePage> {
                   children: [
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 10),
-                      child: MyPosts(),
+                      child: MyPosts(mode: widget.mode,userId: userData!.id,),
                     ),
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 10),
-                      child: MyActivePosts(),
+                      child: MyActivePosts(mode: widget.mode,userId: userData!.id),
                     )
                   ]),
             ),
@@ -151,6 +152,16 @@ class _ProfilePage extends ConsumerState<ProfilePage> {
   }
 
   Widget userInfo(User? user){
+
+    String getTextForButton(){
+      if(widget.mode ==0){
+        return "Profili Düzenle";
+      }else if(widget.mode ==1){
+        return "Takip Et";
+      }else{
+        return "";
+      }
+    }
     final appColors = AppColors();
     if(user == null) {
       return Column(
@@ -232,7 +243,7 @@ class _ProfilePage extends ConsumerState<ProfilePage> {
                     child: GestureDetector(
                       onTap: () async{
                       },
-                      child: getUserPanelButton("Profili Düzenle"),
+                      child: getUserPanelButton(getTextForButton()),
                     ),
                   ),
                 ],
@@ -262,7 +273,7 @@ class _ProfilePage extends ConsumerState<ProfilePage> {
               GestureDetector(
                 onTap: () async{
                 },
-                child: getUserPanelButton("${userData!.advertList?.length} İlan"),
+                child: getUserPanelButton("${userData!.advertList?.length} Paylaşım"),
               ),
             ],)
           ],
@@ -325,7 +336,7 @@ class _ProfilePage extends ConsumerState<ProfilePage> {
                         });
                       },
                       child: Text(
-                          "Paylaşımlarım",style: TextStyle(
+                          widget.mode == 0 ? "Paylaşımlarım" : "Paylaşımları",style: TextStyle(
                         color: switchIndex == 0 ? appColors.white : appColors.blackLight
                       ),
 
@@ -337,7 +348,8 @@ class _ProfilePage extends ConsumerState<ProfilePage> {
                           _pageViewController.animateToPage(1, duration: Duration(milliseconds: 300), curve: Curves.easeInOut);
                         });
                       },
-                      child: Text("Aktif İlanlarım",style: TextStyle(
+                      child: Text(
+                        widget.mode == 0 ? "Aktif İlanlarım" : "Aktif İlanları",style: TextStyle(
                           color: switchIndex == 1 ? appColors.white : appColors.blackLight
                       ),))
                 ],
