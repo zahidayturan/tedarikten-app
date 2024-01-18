@@ -9,10 +9,11 @@ import 'package:tedarikten/pages/supply_details_page.dart';
 import 'package:tedarikten/riverpod_management.dart';
 import 'package:intl/intl.dart';
 import 'package:tedarikten/utils/firestore_helper.dart';
-import 'package:tedarikten/utils/notifications_service.dart';
 
 class MyPosts extends ConsumerStatefulWidget {
-  const MyPosts({Key? key}) : super(key: key);
+  late int mode;
+  late String userId;
+  MyPosts({Key? key,required this.mode, required this.userId}) : super(key: key);
 
   @override
   ConsumerState<MyPosts> createState() => _MyPostsState();
@@ -20,8 +21,6 @@ class MyPosts extends ConsumerStatefulWidget {
 
 class _MyPostsState extends ConsumerState<MyPosts> {
   User? user = FirebaseAuth.instance.currentUser;
-  final FirebaseMessaging _firebaseMessaging = FirebaseMessaging.instance;
-  late List<CombinedInfo> userDataList = [];
   @override
   void initState() {
     super.initState();
@@ -38,7 +37,7 @@ class _MyPostsState extends ConsumerState<MyPosts> {
           textAlign: TextAlign.center,
           text: TextSpan(
             children: <TextSpan>[
-              TextSpan(text: 'Paylaşımlarınızı görmek için\n', style: TextStyle(fontFamily: "FontNormal",color: appColors.black,fontSize: 15)),
+              TextSpan(text:widget.mode == 0 ? 'Paylaşımlarınızı görmek için\n' : 'Paylaşımlarını görmek için\n', style: TextStyle(fontFamily: "FontNormal",color: appColors.black,fontSize: 15)),
               TextSpan(text: 'giriş yapmalısınız',style: TextStyle(fontFamily: "FontBold",color: appColors.blueDark,fontSize: 15)),
             ],
           ),
@@ -46,7 +45,7 @@ class _MyPostsState extends ConsumerState<MyPosts> {
       );
     }else{
       return FutureBuilder<List<CombinedInfo>>(
-        future: FirestoreService().getSupplyDataFromFirestore(user!.uid),
+        future: FirestoreService().getSupplyDataFromFirestore(widget.userId),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return Container(
@@ -69,7 +68,7 @@ class _MyPostsState extends ConsumerState<MyPosts> {
                     ),
                     children: <TextSpan>[
                       TextSpan(text: 'Henüz', style: TextStyle(fontFamily: "FontNormal")),
-                      TextSpan(text: ' paylaşımınız ',style: TextStyle(fontFamily: "FontBold")),
+                      TextSpan(text: widget.mode == 0 ? ' paylaşımınız ' : ' paylaşımı ',style: TextStyle(fontFamily: "FontBold")),
                       TextSpan(text: 'yok',style: TextStyle(fontFamily: "FontNormal")),
                     ],
                   ),
@@ -96,7 +95,7 @@ class _MyPostsState extends ConsumerState<MyPosts> {
 
     String name = ref.read(firebaseControllerRiverpod).getUser()?.name ?? "Kullanıcı";
 
-    String postInfo = data.supplyInfo.userId == user!.uid ? "${name} bir ilan paylaştı" : "${name} bir ilanı yeniden paylaştı";
+    String postInfo = data.supplyInfo.userId == widget.userId ? "$name bir ilan paylaştı" : "$name bir ilanı yeniden paylaştı";
 
     String dataStatus = data.supplyInfo.status != "" ? "${data.supplyInfo.status.split(" ")[0]}\n${data.supplyInfo.status.split(" ")[1]}" : "Tedarik\nPaylaşımı";
 
@@ -145,7 +144,11 @@ class _MyPostsState extends ConsumerState<MyPosts> {
               getText(postInfo, 11, "FontNormal", appColors.blue,TextAlign.start),
               GestureDetector(
                 onTapDown: (TapDownDetails details) async {
-                  await _showPopupMenu(details.globalPosition,data.supplyInfo.id!,user!.uid,data.userInfo.id);
+                  if(widget.mode == 0){
+                    await _showPopupMenu(details.globalPosition,data.supplyInfo.id!,user!.uid,data.userInfo.id);
+                  }else if(widget.mode == 1){
+                    await _showPopupMenuOtherUser(details.globalPosition);
+                  }
                   },
                 child: Container(height: 16,width: 36,
                 padding: EdgeInsets.symmetric(horizontal: 6),
@@ -271,19 +274,33 @@ class _MyPostsState extends ConsumerState<MyPosts> {
     await showMenu(
       context: context,
       position: RelativeRect.fromLTRB(left, top+12, 12, 0),
+          items: [
+          PopupMenuItem<String>(
+            child: const Text('Sil'), value: 'Sil',onTap: () async{
+            String message = await FirestoreService().deleteSupply(documentId,currentUserId,otherUserId);
+            print(message);
+            setState(() {
+
+            });
+          },),
+          ],
+      elevation: 8.0,
+    );
+  }
+
+  _showPopupMenuOtherUser(Offset offset) async {
+    double left = offset.dx;
+    double top = offset.dy;
+    await showMenu(
+      context: context,
+      position: RelativeRect.fromLTRB(left, top+12, 12, 0),
       items: [
         PopupMenuItem<String>(
-            child: const Text('Sil'), value: 'Sil',onTap: () async{
-              String message = await FirestoreService().deleteSupply(documentId,currentUserId,otherUserId);
-              print(message);
-              setState(() {
+          child: const Text('Bildir'), value: 'Bildir',onTap: () async{
+          setState(() {
 
-              });
-              },),
-        PopupMenuItem<String>(
-            child: const Text('Düzenle'), value: 'Düzenle',onTap: () async{
-
-            },),
+          });
+        },),
       ],
       elevation: 8.0,
     );

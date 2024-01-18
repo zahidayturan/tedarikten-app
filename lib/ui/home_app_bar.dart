@@ -42,50 +42,53 @@ class HomeAppBar extends ConsumerWidget implements  PreferredSizeWidget{
               ),
             ),
           ),
-          Expanded(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 4),
-              child: Container(
-                height: 44,
-                decoration: BoxDecoration(
-                    color: appColors.blue,
-                    borderRadius: BorderRadius.all(Radius.circular(5))
-                ),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    Expanded(
-                      child: Padding(
-                        padding: EdgeInsets.only(left: 8,right: 4),
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            RichText(
-                              text: TextSpan(
-                                children: <TextSpan>[
-                                  TextSpan(text: 'Tedarik veya tedarikçi ', style: TextStyle(fontFamily: "FontNormal",fontSize: 12)),
-                                  TextSpan(text: 'arayın',style: TextStyle(fontFamily: "FontBold",fontSize: 12)),
-                                ],
+          GestureDetector(
+            
+            child: Expanded(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 4),
+                child: Container(
+                  height: 44,
+                  decoration: BoxDecoration(
+                      color: appColors.blue,
+                      borderRadius: BorderRadius.all(Radius.circular(5))
+                  ),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Expanded(
+                        child: Padding(
+                          padding: EdgeInsets.only(left: 8,right: 4),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              RichText(
+                                text: TextSpan(
+                                  children: <TextSpan>[
+                                    TextSpan(text: 'Tedarik veya tedarikçi ', style: TextStyle(fontFamily: "FontNormal",fontSize: 12)),
+                                    TextSpan(text: 'arayın',style: TextStyle(fontFamily: "FontBold",fontSize: 12)),
+                                  ],
+                                ),
                               ),
-                            ),
-                            RichText(
-                              text: TextSpan(
-                                children: <TextSpan>[
-                                  TextSpan(text: 'örn: ', style: TextStyle(fontFamily: "FontBold",fontSize: 9)),
-                                  TextSpan(text: 'metal sanayi, hizmet tedariği',style: TextStyle(fontFamily: "FontNormal",fontSize: 9)),
-                                ],
+                              RichText(
+                                text: TextSpan(
+                                  children: <TextSpan>[
+                                    TextSpan(text: 'örn: ', style: TextStyle(fontFamily: "FontBold",fontSize: 9)),
+                                    TextSpan(text: 'metal sanayi, hizmet tedariği',style: TextStyle(fontFamily: "FontNormal",fontSize: 9)),
+                                  ],
+                                ),
                               ),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
                       ),
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 8),
-                      child: Icon(Icons.search_rounded,size: 26,color: appColors.white,),
-                    )
-                  ],
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 8),
+                        child: Icon(Icons.search_rounded,size: 26,color: appColors.white,),
+                      )
+                    ],
+                  ),
                 ),
               ),
             ),
@@ -122,7 +125,7 @@ class HomeAppBar extends ConsumerWidget implements  PreferredSizeWidget{
                 }
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => ProfilePage()),
+                  MaterialPageRoute(builder: (context) => ProfilePage(mode: 0)),
                 );
               },
               child: Container(

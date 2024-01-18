@@ -192,6 +192,80 @@ class FirestoreService {
     return [];
   }
 
+  Future<List<CombinedInfo>> getActiveSupplyDataFromFirestore(String userId) async {
+    try {
+      var userQuerySnapshot = await FirebaseFirestore.instance
+          .collection('users')
+          .where('id', isEqualTo: userId)
+          .get();
+
+      var advertList = userQuerySnapshot.docs[0]['advertList'];
+
+      var querySnapshotForSupplies = await FirebaseFirestore.instance
+          .collection('supplies')
+          .where(FieldPath.documentId, whereIn: advertList)
+          .get();
+
+      if (querySnapshotForSupplies.docs.isNotEmpty) {
+        List<DocumentSnapshot> documents = querySnapshotForSupplies.docs;
+        List<CombinedInfo?> userDataList = await Future.wait(documents.map((doc) async {
+          Map<String, dynamic> supplyData = doc.data()! as Map<String, dynamic>;
+
+          DateTime dateLast = DateTime.parse(supplyData['dateLast']);
+          String userIdFromSupply = supplyData['userId'];
+
+          DateTime today = DateTime.now();
+
+          if (dateLast.isAfter(today) && userIdFromSupply == userId) {
+            String companyId = supplyData['companyId'];
+
+            Map<String, dynamic> companyData = {};
+            if (companyId != "0") {
+              DocumentSnapshot companyDoc = await FirebaseFirestore.instance
+                  .collection('companies')
+                  .doc(companyId)
+                  .get();
+              companyData = companyDoc.data()! as Map<String, dynamic>;
+            } else {
+              CompanyInfo myDataInstance = CompanyInfo(
+                name: "",
+                location: "",
+                year: 11111,
+                phone: "",
+                address: "",
+                personNameSurname: "",
+                personEmail: "",
+                userId: "",
+              );
+              companyData = myDataInstance.toJson();
+            }
+
+            QuerySnapshot userQuerySnapshot = await FirebaseFirestore.instance
+                .collection('users')
+                .where("id", isEqualTo: userIdFromSupply)
+                .get();
+
+            Map<String, dynamic> userData = userQuerySnapshot.docs.first.data()! as Map<String, dynamic>;
+
+            return CombinedInfo.fromFirestore(supplyData, companyData, userData);
+          } else {
+            return null; // Eğer dateLast şartı sağlanmıyorsa null dönmeli
+          }
+        }).toList());
+
+        // Null'ları filtrele ve geri dön
+        return userDataList.where((element) => element != null).cast<CombinedInfo>().toList();
+      } else {
+        print('Belge bulunamadı.');
+        return [];
+      }
+    } catch (e, stackTrace) {
+      print('Veri çekme hatası: $e\n$stackTrace');
+      return [];
+    }
+  }
+
+
   Future<List<CombinedInfo>> getActiveSupplyDataFromFirestoreAllUser(String userId) async {
     late List<CombinedInfo> userDataList = [];
     try {

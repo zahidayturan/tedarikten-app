@@ -4,12 +4,16 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:tedarikten/constants/app_colors.dart';
+import 'package:tedarikten/models/combined_info.dart';
 import 'package:tedarikten/models/supply_info.dart';
 import 'package:tedarikten/riverpod_management.dart';
+import 'package:tedarikten/utils/firestore_helper.dart';
 
 
 class MyActivePosts extends ConsumerStatefulWidget {
-  const MyActivePosts({Key? key}) : super(key: key);
+  late int mode;
+  late String userId;
+  MyActivePosts({Key? key,required this.mode, required this.userId}) : super(key: key);
 
   @override
   ConsumerState<MyActivePosts> createState() => _MyActivePostsState();
@@ -20,131 +24,93 @@ class _MyActivePostsState extends ConsumerState<MyActivePosts> {
   @override
   void initState() {
     super.initState();
-    if(user != null){
-      fetchUserDataFromFirestore(FirebaseAuth.instance.currentUser!.uid);
-    }
-  }
-
-  late List<SupplyInfo> userDataList = [];
-
-  Future<void> fetchUserDataFromFirestore(String userId) async {
-    try {
-      var querySnapshot = await FirebaseFirestore.instance
-          .collection('supplies')
-          .where('userId', isEqualTo: userId)
-          .get();
-
-      if (querySnapshot.docs.isNotEmpty) {
-        List<DocumentSnapshot> documents = querySnapshot.docs;
-
-        // Null değerleri filtreleyerek SupplyInfo listesi oluştur
-        userDataList = documents.map((doc) {
-          Map<String, dynamic> jsonData = doc.data() as Map<String, dynamic>;
-
-          DateTime dateLast = DateTime.parse(jsonData['dateLast']);
-          DateTime today = DateTime.now();
-
-          if (dateLast.isAfter(today)) {
-            return SupplyInfo.fromJson(jsonData);
-          } else {
-            return null;
-          }
-        }).whereType<SupplyInfo>().toList(); // whereType kullanarak null olmayanları al
-
-        print('Gelen SupplyInfo Listesi: $userDataList');
-      } else {
-        print('Belge bulunamadı.');
-      }
-    } catch (e) {
-      print('Veri çekme hatası: $e');
-    }
-
-    setState(() {
-      // State güncelleme işlemleri burada
-    });
   }
 
 
 
   Widget build(BuildContext context) {
     final appColors = AppColors();
-    if(user != null && userDataList.isNotEmpty){
-      return ListView.builder(
-        physics: BouncingScrollPhysics(),
-        itemCount: userDataList.length,
-        itemBuilder: (context, index) {
-            if(userDataList[index].dateLast != ""){
-              DateTime sharingDateTime = DateTime.parse(userDataList[index].dateLast);
-              if(sharingDateTime.isAfter(DateTime.now())){
-                return getPostContainer(userDataList[index]);
-              }
-              else{
-                return null;
-              }
-            }else{
-              return null;
-            }
-           },
-      );
-    }else if(userDataList.isEmpty){
-      return Center(
-        child: RichText(
-          textAlign: TextAlign.center,
-          text: TextSpan(
-            style: TextStyle(
-                fontSize: 15,
-                height: 1,
-                color: appColors.blueDark
-            ),
-            children: <TextSpan>[
-              TextSpan(text: 'Henüz', style: TextStyle(fontFamily: "FontNormal")),
-              TextSpan(text: ' aktif ilanınız ',style: TextStyle(fontFamily: "FontBold")),
-              TextSpan(text: 'yok',style: TextStyle(fontFamily: "FontNormal")),
-            ],
-          ),
-        ),
-      );
-    } else if(userDataList == null) {
+    if(user == null ){
       return Center(
         child: RichText(
           textAlign: TextAlign.center,
           text: TextSpan(
             children: <TextSpan>[
-              TextSpan(text: 'Paylaşımlarınızı görmek için\n', style: TextStyle(fontFamily: "FontNormal",color: appColors.black,fontSize: 15)),
+              TextSpan(text: widget.mode == 0 ? 'Paylaşımlarınızı görmek için\n' : 'Paylaşımları görmek için\n', style: TextStyle(fontFamily: "FontNormal",color: appColors.black,fontSize: 15)),
               TextSpan(text: 'giriş yapmalısınız',style: TextStyle(fontFamily: "FontBold",color: appColors.blueDark,fontSize: 15)),
             ],
           ),
         ),
       );
     }else{
-      return Center(child: Text("Bir sorun oluştu",style:  TextStyle(color: appColors.blueDark),));
+      return FutureBuilder<List<CombinedInfo>>(
+        future: FirestoreService().getActiveSupplyDataFromFirestore(widget.userId),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return Container(
+                height: 40,
+                width: 40,
+                child: Center(child: CircularProgressIndicator(color: appColors.blueDark,)));
+          } else if (snapshot.hasError) {
+            return Center(child: Text("Bir sorun oluştu",style:  TextStyle(color: appColors.blueDark),));
+          }else{
+            List<CombinedInfo>? supplyDataList = snapshot.data;
+            if(supplyDataList!.isEmpty){
+              return Center(
+                child: RichText(
+                  textAlign: TextAlign.center,
+                  text: TextSpan(
+                    style: TextStyle(
+                        fontSize: 15,
+                        height: 1,
+                        color: appColors.blueDark
+                    ),
+                    children: <TextSpan>[
+                      TextSpan(text: 'Henüz', style: TextStyle(fontFamily: "FontNormal")),
+                      TextSpan(text: widget.mode == 0 ? ' aktif ilanınız ' : ' aktif ilanı ',style: TextStyle(fontFamily: "FontBold")),
+                      TextSpan(text: 'yok',style: TextStyle(fontFamily: "FontNormal")),
+                    ],
+                  ),
+                ),
+              );
+            }else{
+              return ListView.builder(
+                physics: BouncingScrollPhysics(),
+                itemCount: supplyDataList.length,
+                itemBuilder: (context, index) {
+                  return getPostContainer(supplyDataList[index]); },
+              );
+            }
+          }
+        },
+      );
     }
   }
 
-  Widget getPostContainer(SupplyInfo data) {
+  Widget getPostContainer(CombinedInfo data) {
     final appColors = AppColors();
 
-    String name = ref.read(firebaseControllerRiverpod).getUser()?.name ?? "Kullanıcı";
+    String name = data.userInfo.name ?? "Kullanıcı";
 
-    String dataStatus = data.status != "" ? "${data.status.split(" ")[0]}\n${data.status.split(" ")[1]}" : "Tedarik\nPaylaşımı";
+    String dataStatus = data.supplyInfo.status != "" ? "${data.supplyInfo.status.split(" ")[0]}\n${data.supplyInfo.status.split(" ")[1]}" : "Tedarik\nPaylaşımı";
 
-    DateTime sharingDateTime = data.sharingDate != "" ? DateTime.parse(data.sharingDate) : DateTime.now();
+    DateTime sharingDateTime = data.supplyInfo.sharingDate != "" ? DateTime.parse(data.supplyInfo.sharingDate) : DateTime.now();
     String sharingDate = DateFormat('dd.MM.yyyy').format(sharingDateTime);
     String sharingTime = DateFormat('HH:mm').format(sharingDateTime);
 
-    DateTime firstDateTime = data.dateFirst != "" ? DateTime.parse(data.dateFirst) : DateTime.now();
+    DateTime firstDateTime = data.supplyInfo.dateFirst != "" ? DateTime.parse(data.supplyInfo.dateFirst) : DateTime.now();
     String firstDate = DateFormat('dd.MM.yyyy HH:mm').format(firstDateTime);
 
 
 
-    DateTime lastDateTime = data.dateLast != "" ? DateTime.parse(data.dateLast) : DateTime.now();
+    DateTime lastDateTime = data.supplyInfo.dateLast != "" ? DateTime.parse(data.supplyInfo.dateLast) : DateTime.now();
     String lastDate = DateFormat('dd.MM.yyyy HH:mm').format(lastDateTime);
 
 
 
     String getCompleteStatus(){
-      if(data.dateLast != "" && data.dateFirst != ""){
-        DateTime sharingDateTime = DateTime.parse(data.dateLast);
+      if(data.supplyInfo.dateLast != "" && data.supplyInfo.dateFirst != ""){
+        DateTime sharingDateTime = DateTime.parse(data.supplyInfo.dateLast);
         if(sharingDateTime.isBefore(DateTime.now())){
           return "Tamamlanmış\nİlan";
         }
@@ -157,9 +123,9 @@ class _MyActivePostsState extends ConsumerState<MyActivePosts> {
     }
 
     Color getStatusColor(){
-      if(data.status == "Tedarikçi Arıyor"){
+      if(data.supplyInfo.status == "Tedarikçi Arıyor"){
         return appColors.pink;
-      } else if(data.status == "Tedarik Arıyor"){
+      } else if(data.supplyInfo.status == "Tedarik Arıyor"){
         return appColors.orange;
       } else{
         return appColors.blueDark;
@@ -182,8 +148,8 @@ class _MyActivePostsState extends ConsumerState<MyActivePosts> {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  getText(data.type, 17, "FontBold", appColors.black,TextAlign.start),
-                  getText("Mehmet Yılmaz", 14, "FontNormal", appColors.blackLight,TextAlign.start)
+                  getText(data.supplyInfo.type, 17, "FontBold", appColors.black,TextAlign.start),
+                  getText("${data.userInfo.name} ${data.userInfo.surname}", 14, "FontNormal", appColors.blackLight,TextAlign.start)
                 ],
               ),
               Container(height: 16,width: 36,
@@ -198,7 +164,7 @@ class _MyActivePostsState extends ConsumerState<MyActivePosts> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              getText(data.name, 13, "FontNormal", appColors.black,TextAlign.start),
+              getText(data.supplyInfo.name, 13, "FontNormal", appColors.black,TextAlign.start),
               Padding(
                 padding: const EdgeInsets.symmetric(vertical: 6),
                 child: Row(
