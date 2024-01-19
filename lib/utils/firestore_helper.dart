@@ -1,12 +1,18 @@
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter/material.dart';
+import 'package:firebase_storage/firebase_storage.dart';
+import 'package:path/path.dart';
 import 'package:tedarikten/models/application_supply_info.dart';
 import 'package:tedarikten/models/company_info.dart';
 import 'package:tedarikten/models/notification_info.dart';
 import 'package:tedarikten/models/supply_info.dart';
 import 'package:tedarikten/models/user_info.dart';
 import 'package:tedarikten/models/combined_info.dart';
+import 'dart:io';
+
+import 'package:url_launcher/url_launcher.dart';
+
 
 class FirestoreService {
 
@@ -994,6 +1000,38 @@ class FirestoreService {
     } catch (e, stackTrace) {
       print('Veri çekme hatası: $e\n$stackTrace');
       return "0";
+    }
+  }
+
+  Future<String> uploadFile(String filePath, String fileName) async {
+    try {
+      File file = File(filePath);
+
+      Reference storageReference = FirebaseStorage.instance.ref().child('uploads/$fileName');
+      UploadTask uploadTask = storageReference.putFile(file);
+      await uploadTask.whenComplete(() => print('Dosya yüklendi'));
+
+      String downloadURL = await storageReference.getDownloadURL();
+      return "Ok";
+    } catch (e) {
+      print('Dosya yükleme hatası: $e');
+      return "Error";
+    }
+  }
+
+  Future<String> openFileUrl(String fileName) async {
+    try {
+      Reference storageReference = FirebaseStorage.instance.ref().child('uploads/$fileName');
+
+
+      String downloadURL = await storageReference.getDownloadURL();
+
+      print(downloadURL);
+
+      return downloadURL;
+    } catch (e) {
+      print('URL açma hatası: $e');
+      return "Error";
     }
   }
 

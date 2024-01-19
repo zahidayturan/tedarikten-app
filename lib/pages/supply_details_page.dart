@@ -10,6 +10,7 @@ import 'package:tedarikten/models/combined_info.dart';
 import 'package:tedarikten/pages/profileInfoPage/profile_info_page.dart';
 import 'package:tedarikten/riverpod_management.dart';
 import 'package:tedarikten/utils/firestore_helper.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class SupplyDetailsPage extends ConsumerStatefulWidget {
   late int mode;
@@ -758,9 +759,24 @@ class _SupplyDetailsPageState extends ConsumerState<SupplyDetailsPage> {
             padding: const EdgeInsets.only(bottom: 8,top: 12),
             child: getText("Ek Dosyalar", 18, appColors.orange, "FontBold", TextAlign.start),
           ),
-          Padding(
-            padding: const EdgeInsets.only(left: 16,bottom: 6),
-            child: getText("Ek dosya eklenmemiş", 15, appColors.black, "FontNormal", TextAlign.start),
+          GestureDetector(
+            onTap: () async{
+              if(data.supplyInfo.documentId != "0"){
+                String url = await FirestoreService().openFileUrl(data.supplyInfo.documentId);
+                void launchURL() async {
+                  if (await canLaunch(url)) {
+                    await launch(url);
+                  } else {
+                    throw 'URL açılamadı: $url';
+                  }
+                }
+              }
+
+            },
+            child: Padding(
+              padding: const EdgeInsets.only(left: 16,bottom: 6),
+              child: getText(data.supplyInfo.documentId != "0" ? data.supplyInfo.documentId :"Ek dosya eklenmemiş", 15,data.supplyInfo.documentId != "0" ? appColors.blue : appColors.black, "FontNormal", TextAlign.start),
+            ),
           ),
 
 
@@ -1035,7 +1051,7 @@ class _SupplyDetailsPageState extends ConsumerState<SupplyDetailsPage> {
           ),
           Padding(
             padding: const EdgeInsets.only(left: 16,bottom: 6),
-            child: getText("Ek dosya eklenmemiş", 15, appColors.black, "FontNormal", TextAlign.start),
+            child: getText(data.supplyInfo.documentId != "0" ? "${data.supplyInfo.documentId}" :"Ek dosya eklenmemiş", 15, appColors.black, "FontNormal", TextAlign.start),
           ),
 
 

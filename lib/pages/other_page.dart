@@ -21,9 +21,7 @@ class _OtherPage extends ConsumerState<OtherPage> {
     super.initState();
   }
 
-  void getUser() async {
-
-  }
+  final appColors = AppColors();
 
 
 
@@ -31,9 +29,6 @@ class _OtherPage extends ConsumerState<OtherPage> {
     User? user = FirebaseAuth.instance.currentUser;
     var read = ref.read(profilePageRiverpod);
     var size = MediaQuery.of(context).size;
-    if(user != null){
-      getUser();
-    }
     return SafeArea(
       child: Scaffold(
         body: Column(
@@ -42,7 +37,13 @@ class _OtherPage extends ConsumerState<OtherPage> {
             Container(
               height: size.height-300,
               width: size.width,
-              child: SizedBox()
+              child: Center(
+                child: Text("Tedarikten\nkulandığınız için\nteşekkür ederiz",style: TextStyle(
+                  color: appColors.blueDark,
+                  fontSize: 18,
+                  fontFamily: "FontNormal"
+                ),textAlign: TextAlign.center,),
+              )
             ),
           ],
         ),
@@ -51,7 +52,7 @@ class _OtherPage extends ConsumerState<OtherPage> {
   }
 
   Widget topWidget(User? user){
-    final appColors = AppColors();
+
     return Container(
       height: 230,
       child: Stack(
@@ -101,7 +102,7 @@ class _OtherPage extends ConsumerState<OtherPage> {
         ),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 10),
-          child: Text("Diğer İşlemler",style: TextStyle(color: appColors.white,fontSize: 18,fontFamily: "FontNormal"),),
+          child: Text("",style: TextStyle(color: appColors.white,fontSize: 18,fontFamily: "FontNormal"),),
         ),
         Spacer(),
         Container(

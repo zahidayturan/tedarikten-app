@@ -1,10 +1,12 @@
 import 'dart:math';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:path/path.dart';
 import 'package:tedarikten/constants/app_colors.dart';
 import 'package:tedarikten/models/company_info.dart';
 import 'package:tedarikten/models/supply_info.dart';
@@ -62,7 +64,10 @@ class _FindSupplyState extends ConsumerState<FindSupply> {
   String locationCompanySupplySelect = "Şehir Seçin";
   TextEditingController typeSupplyController = TextEditingController();
   TextEditingController locationSupplyController = TextEditingController();
-  TextEditingController locationCompanySupplyController = TextEditingController() ;
+  TextEditingController locationCompanySupplyController = TextEditingController();
+  String? selectedFileName;
+  String? firebaseFileName;
+  String filePath = "";
 
   User? user = FirebaseAuth.instance.currentUser;
 
@@ -85,6 +90,7 @@ class _FindSupplyState extends ConsumerState<FindSupply> {
     selectedDateLast = selectedDateLast.add(Duration(days: 21));
     selectedTimeFirst = TimeOfDay.now();
     selectedTimeLast = TimeOfDay.now();
+    selectedFileName = null;
   }
 
   Widget build(BuildContext context) {
@@ -179,7 +185,33 @@ class _FindSupplyState extends ConsumerState<FindSupply> {
                 SizedBox(height: 16,),
                 getSectionText("Ek Dosyalar", appColors.blue),
                 SizedBox(height: 8,),
-                getSectionContainerWithRow(false, "Dosya Eklemek İçin Dokunun", SizedBox())
+                GestureDetector(
+                    onTap: () async{
+                      showDialog(
+                        context: context,
+                        builder: (BuildContext context) {
+                          return Center(
+                            child: CircularProgressIndicator(
+                              color: appColors.blueLight,
+                            ),
+                          );
+                        },
+                        barrierDismissible: false,
+                      );
+                      FilePickerResult? result = await FilePicker.platform.pickFiles();
+
+                      if (result != null) {
+                        filePath = result.files.single.path!;
+                        String fileName = basename(filePath);
+                        String? uid = FirebaseAuth.instance.currentUser?.uid;
+                        firebaseFileName = "${uid}_${fileName}";
+                        setState(() {
+                          selectedFileName = fileName;
+                        });
+                      }
+                      Navigator.pop(context);
+                    },
+                    child: getSectionContainerWithRow(false, selectedFileName ?? "Dosya Eklemek İçin Dokunun", SizedBox()))
               ],
             ),
           ),
@@ -245,9 +277,22 @@ class _FindSupplyState extends ConsumerState<FindSupply> {
                   if(locationSupplyController.text == "Şehir Seçin"){
                     locationController = "Eklenmemiş";
                   }
-                 await firestoreService.addAdvertToFirestore(SupplyInfo(type: typeSupplyController.text, name: nameSupplyController.text, description: descriptionSupplyController.text, dateFirst: firstDate.toString(), dateLast: lastDate.toString(), amount: amount, minTime: minTime, location: locationController, status: status,sharingDate: sharingDate,editingDate: editingDate,companyId: companyId, documentId: "0", sharersIdList: [],registrantsIdList: [],applicantsIdList: [],userId: user!.uid));
-                Navigator.pop(context);
-                  ref.read(customNavBarRiverpod).setCurrentIndex(0);
+
+                  if(selectedFileName!=null && firebaseFileName!=null){
+                    String response = await FirestoreService().uploadFile(filePath,firebaseFileName!);
+                    if(response == "Ok"){
+                      await firestoreService.addAdvertToFirestore(SupplyInfo(type: typeSupplyController.text, name: nameSupplyController.text, description: descriptionSupplyController.text, dateFirst: firstDate.toString(), dateLast: lastDate.toString(), amount: amount, minTime: minTime, location: locationController, status: status,sharingDate: sharingDate,editingDate: editingDate,companyId: companyId, documentId: firebaseFileName!, sharersIdList: [],registrantsIdList: [],applicantsIdList: [],userId: user!.uid));
+                      Navigator.pop(context);
+                      ref.read(customNavBarRiverpod).setCurrentIndex(0);
+                    }else{
+                      showBottomDialog("Yüklenirken hata oluştu. Kapatıp tekrar deneyiniz",context);
+                    }
+                   }else{
+                    await firestoreService.addAdvertToFirestore(SupplyInfo(type: typeSupplyController.text, name: nameSupplyController.text, description: descriptionSupplyController.text, dateFirst: firstDate.toString(), dateLast: lastDate.toString(), amount: amount, minTime: minTime, location: locationController, status: status,sharingDate: sharingDate,editingDate: editingDate,companyId: companyId, documentId: "0", sharersIdList: [],registrantsIdList: [],applicantsIdList: [],userId: user!.uid));
+                    Navigator.pop(context);
+                    ref.read(customNavBarRiverpod).setCurrentIndex(0);
+                  }
+
                 }else{
                   String errorMessage = "Eksik bilgi verdiniz";
                   if(typeSupplyController.text == "Türü Seçin"){
@@ -289,7 +334,6 @@ class _FindSupplyState extends ConsumerState<FindSupply> {
   }
 
   Widget getButton(String text,Color buttonColor,Color textColor,double fontSize){
-    var size = MediaQuery.of(context).size;
     return Container(
       decoration: BoxDecoration(
         color: buttonColor,
@@ -668,6 +712,32 @@ class _FindSupplyState extends ConsumerState<FindSupply> {
           ),
           yourWidget,
         ],
+      ),
+    );
+  }
+
+
+  void showBottomDialog(String text,BuildContext context){
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+          backgroundColor: appColors.blueDark,
+          duration: const Duration(seconds: 3),
+          elevation: 0,
+          behavior: SnackBarBehavior.floating,
+          content: Center(
+            child: Text(
+              text,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 16,
+                fontFamily: 'FontNormal',
+                height: 1,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ),
+          shape: const RoundedRectangleBorder(
+              borderRadius: BorderRadius.all(Radius.circular(5)))
       ),
     );
   }
