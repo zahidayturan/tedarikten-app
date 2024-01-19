@@ -402,6 +402,40 @@ class FirestoreService {
     }
   }
 
+  Future<String> updateSave(String userId, String supplyId) async {
+    try {
+      QuerySnapshot userSnapshot = await _firestore
+          .collection('users')
+          .where('id', isEqualTo: userId)
+          .get();
+
+      if (userSnapshot.docs.isNotEmpty) {
+        DocumentReference userDocRef = userSnapshot.docs.first.reference;
+        DocumentSnapshot userDocSnapshot = await userDocRef.get();
+        Map<String, dynamic> userData = userDocSnapshot.data() as Map<String, dynamic>;
+        List<String> registeredList = List<String>.from(userData['registeredList']);
+        registeredList.remove(supplyId);
+        await userDocRef.update({'registeredList': registeredList});
+
+        DocumentReference supplyDocRef = _firestore.collection('supplies').doc(supplyId);
+        DocumentSnapshot supplySnapshot = await supplyDocRef.get();
+        Map<String, dynamic> supplyData = supplySnapshot.data() as Map<String, dynamic>;
+        List<String> registeredListSupply = List<String>.from(supplyData['registrantsIdList']);
+        registeredListSupply.remove(userId);
+        await supplyDocRef.update({'registrantsIdList': registeredListSupply});
+
+        return "Ok";
+      } else {
+        print("User document not found");
+        return "Error";
+      }
+    } catch (e) {
+      print('Belge güncellenirken bir hata oluştu: $e');
+      return "Error";
+    }
+  }
+
+
   Future<String> advertApply(ApplicationSupplyInfo application) async {
 
     //applyInfo oluştur
@@ -896,7 +930,6 @@ class FirestoreService {
       return "0";
     }
   }
-
 
   Future<String> getRegisteredCountFromFirestore(String userId) async {
     try {

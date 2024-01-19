@@ -102,9 +102,14 @@ class _SuppliesPage extends ConsumerState<SuppliesPage> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
+                    user != null ?
                     Padding(
                       padding: const EdgeInsets.only(left: 36),
                       child: switchIndex == 0 ? getItemCountForMy() : getItemCountForOther(),
+                    ) :
+                    Padding(
+                      padding: const EdgeInsets.only(left: 36),
+                      child: Text("Henüz\ngiriş\nyapmadınız",style: TextStyle(color: appColors.white),),
                     ),
                   ],
                 ),

@@ -235,7 +235,7 @@ class _NotificationsPage extends ConsumerState<NotificationsPage> {
                 pageTopController(),
                 Padding(
                   padding: const EdgeInsets.only(top: 36,left: 36),
-                  child: getNotificationCount()
+                  child: user != null ? getNotificationCount() : Text("Henüz\ngiriş\nyapmadınız",style: TextStyle(color: appColors.white),),
                 )
                 
               ],

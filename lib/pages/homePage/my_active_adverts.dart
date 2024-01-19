@@ -5,8 +5,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:tedarikten/constants/app_colors.dart';
+import 'package:tedarikten/models/combined_info.dart';
 import 'package:tedarikten/models/supply_info.dart';
+import 'package:tedarikten/pages/supply_details_page.dart';
 import 'package:tedarikten/riverpod_management.dart';
+import 'package:tedarikten/utils/firestore_helper.dart';
 
 
 class MyActiveAdverts extends ConsumerStatefulWidget {
@@ -22,48 +25,6 @@ class _MyActiveAdvertsState extends ConsumerState<MyActiveAdverts> {
   @override
   void initState() {
     super.initState();
-    if(user != null){
-      fetchUserDataFromFirestore(FirebaseAuth.instance.currentUser!.uid);
-    }
-  }
-
-  late List<SupplyInfo> userDataList = [];
-
-  Future<void> fetchUserDataFromFirestore(String userId) async {
-    try {
-      var querySnapshot = await FirebaseFirestore.instance
-          .collection('supplies')
-          .where('userId', isEqualTo: userId)
-          .get();
-
-      if (querySnapshot.docs.isNotEmpty) {
-        List<DocumentSnapshot> documents = querySnapshot.docs;
-
-        // Null değerleri filtreleyerek SupplyInfo listesi oluştur
-        userDataList = documents.map((doc) {
-          Map<String, dynamic> jsonData = doc.data() as Map<String, dynamic>;
-
-          DateTime dateLast = DateTime.parse(jsonData['dateLast']);
-          DateTime today = DateTime.now();
-
-          if (dateLast.isAfter(today)) {
-            return SupplyInfo.fromJson(jsonData);
-          } else {
-            return null;
-          }
-        }).whereType<SupplyInfo>().toList(); // whereType kullanarak null olmayanları al
-
-        print('Gelen SupplyInfo Listesi: $userDataList');
-      } else {
-        print('Belge bulunamadı.');
-      }
-    } catch (e) {
-      print('Veri çekme hatası: $e');
-    }
-
-    setState(() {
-      // State güncelleme işlemleri burada
-    });
   }
 
 
@@ -76,63 +37,20 @@ class _MyActiveAdvertsState extends ConsumerState<MyActiveAdverts> {
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             getText("Aktif İlanlarım", 16, "FontBold", appColors.blackLight, TextAlign.start),
-            getText("${userDataList.length} İlanın Aktif Olarak Listeleniyor", 12, "FontNormal", appColors.blackLight, TextAlign.start),
+            getText("İlanların Aktif Listeleniyor", 12, "FontNormal", appColors.blackLight, TextAlign.start),
           ],
         ),
         getItems()
-
       ],
     );
     
   }
-  
-  Widget getItems(){
-    if(user != null && userDataList.isNotEmpty){
-      return SizedBox(
+
+  Widget getItems() {
+    final appColors = AppColors();
+    if(user == null ){
+      return Container(
         height: 120,
-        child: ListView.builder(
-          physics: BouncingScrollPhysics(),
-          itemCount: userDataList.length,
-          scrollDirection: Axis.horizontal,
-          itemBuilder: (context, index) {
-                return getPostContainer(userDataList[index]);
-          },
-        ),
-      );
-    }else if(userDataList.isEmpty){
-      return Container(
-        height: 60,
-        margin: EdgeInsets.only(top: 8),
-        decoration: BoxDecoration(
-          color: appColors.greenLight,
-          borderRadius: BorderRadius.all(Radius.circular(5)),
-        ),
-        child: Center(
-          child: RichText(
-            textAlign: TextAlign.center,
-            text: TextSpan(
-              style: TextStyle(
-                  fontSize: 15,
-                  height: 1,
-                  color: appColors.blueDark
-              ),
-              children: <TextSpan>[
-                TextSpan(text: 'Henüz', style: TextStyle(fontFamily: "FontNormal")),
-                TextSpan(text: ' aktif ilanınız ',style: TextStyle(fontFamily: "FontBold")),
-                TextSpan(text: 'yok',style: TextStyle(fontFamily: "FontNormal")),
-              ],
-            ),
-          ),
-        ),
-      );
-    } else if(userDataList == null) {
-      return Container(
-        height: 60,
-        margin: EdgeInsets.only(top: 8),
-        decoration: BoxDecoration(
-          color: appColors.greenLight,
-          borderRadius: BorderRadius.all(Radius.circular(5)),
-        ),
         child: Center(
           child: RichText(
             textAlign: TextAlign.center,
@@ -146,27 +64,82 @@ class _MyActiveAdvertsState extends ConsumerState<MyActiveAdverts> {
         ),
       );
     }else{
-      return Center(child: Text("Bir sorun oluştu",style:  TextStyle(color: appColors.blueDark),));
+      return FutureBuilder<List<CombinedInfo>>(
+        future: FirestoreService().getActiveSupplyDataFromFirestore(user!.uid),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return Container(
+                height: 120,
+                width: 40,
+                child: Center(child: CircularProgressIndicator(color: appColors.blueDark,)));
+          } else if (snapshot.hasError) {
+            return Center(child: Text("Bir sorun oluştu",style:  TextStyle(color: appColors.blueDark),));
+          }else{
+            List<CombinedInfo>? supplyDataList = snapshot.data;
+            if(supplyDataList!.isEmpty){
+              return Container(
+                height: 120,
+                child: Center(
+                  child: RichText(
+                    textAlign: TextAlign.center,
+                    text: TextSpan(
+                      style: TextStyle(
+                          fontSize: 15,
+                          height: 1,
+                          color: appColors.blueDark
+                      ),
+                      children: <TextSpan>[
+                        TextSpan(text: 'Henüz', style: TextStyle(fontFamily: "FontNormal")),
+                        TextSpan(text: ' aktif ilanınız ' ,style: TextStyle(fontFamily: "FontBold")),
+                        TextSpan(text: 'yok',style: TextStyle(fontFamily: "FontNormal")),
+                      ],
+                    ),
+                  ),
+                ),
+              );
+            }else{
+              return SizedBox(
+                height: 120,
+                child: ListView.builder(
+                  physics: BouncingScrollPhysics(),
+                  scrollDirection: Axis.horizontal,
+                  itemCount: supplyDataList.length,
+                  itemBuilder: (context, index) {
+                    return getPostContainer(supplyDataList[index],supplyDataList.length); },
+                ),
+              );
+            }
+          }
+        },
+      );
     }
   }
 
-  Widget getPostContainer(SupplyInfo data) {
+  Widget getPostContainer(CombinedInfo data,int length) {
     final appColors = AppColors();
     var size = MediaQuery.of(context).size;
 
-    DateTime firstDateTime = data.dateFirst != "" ? DateTime.parse(data.dateFirst) : DateTime.now();
+    DateTime firstDateTime = data.supplyInfo.dateFirst != "" ? DateTime.parse(data.supplyInfo.dateFirst) : DateTime.now();
     String firstDate = DateFormat('dd.MM.yyyy').format(firstDateTime);
 
-    DateTime lastDateTime = data.dateLast != "" ? DateTime.parse(data.dateLast) : DateTime.now();
+    DateTime lastDateTime = data.supplyInfo.dateLast != "" ? DateTime.parse(data.supplyInfo.dateLast) : DateTime.now();
     String lastDate = DateFormat('dd.MM.yyyy').format(lastDateTime);
 
     return Container(
-      width: userDataList.length != 1 ? 360 : size.width-20,
+      width: length != 1 ? 360 : size.width-20,
       height: 120,
-      margin:  EdgeInsets.only(right: userDataList.length != 1 ? 8 : 0,top: 8),
+      margin:  EdgeInsets.only(right: length != 1 ? 8 : 0,top: 8),
       padding: EdgeInsets.all(8.0),
       decoration: BoxDecoration(
         color: appColors.greenLight,
+        boxShadow: [
+          BoxShadow(
+              color: appColors.blackLight.withOpacity(0.2),
+              spreadRadius: 0.4,
+              blurRadius: 2,
+              offset: const Offset(0, 2)
+          )
+        ],
         borderRadius: BorderRadius.all(Radius.circular(5)),
       ),
       child: Column(
@@ -176,10 +149,10 @@ class _MyActiveAdvertsState extends ConsumerState<MyActiveAdverts> {
             crossAxisAlignment: CrossAxisAlignment.center,
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              getText(data.type, 15, "FontBold", appColors.blue,TextAlign.start),
+              getText(data.supplyInfo.type, 15, "FontBold", appColors.blue,TextAlign.start),
               SizedBox(
                   width: 160,
-                  child: getText(data.name, 13, "FontNormal", appColors.black,TextAlign.end)),
+                  child: getText(data.supplyInfo.name, 13, "FontNormal", appColors.black,TextAlign.end)),
             ],
           ),
           Row(
@@ -204,19 +177,19 @@ class _MyActiveAdvertsState extends ConsumerState<MyActiveAdverts> {
             children: [
               Row(
                 children: [
-                  getText(data.applicantsIdList.length.toString(), 13, "FontBold", appColors.black, TextAlign.start),
+                  getText(data.supplyInfo.applicantsIdList.length.toString(), 13, "FontBold", appColors.black, TextAlign.start),
                   getText(" İlgileniyor", 12, "FontNormal", appColors.blackLight, TextAlign.start),
                 ],
               ),
               Row(
                 children: [
-                  getText(data.registrantsIdList.length.toString(), 13, "FontBold", appColors.black, TextAlign.start),
+                  getText(data.supplyInfo.registrantsIdList.length.toString(), 13, "FontBold", appColors.black, TextAlign.start),
                   getText(" Kaydetti", 12, "FontNormal", appColors.blackLight, TextAlign.start),
                 ],
               ),
               Row(
                 children: [
-                  getText(data.sharersIdList.length.toString(), 13, "FontBold", appColors.black, TextAlign.start),
+                  getText(data.supplyInfo.sharersIdList.length.toString(), 13, "FontBold", appColors.black, TextAlign.start),
                   getText(" Paylaştı", 12, "FontNormal", appColors.blackLight, TextAlign.start),
                 ],
               ),
@@ -226,19 +199,29 @@ class _MyActiveAdvertsState extends ConsumerState<MyActiveAdverts> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               SizedBox(),
-              Container(
-                decoration: BoxDecoration(
-                    color: appColors.blueDark,
-                    borderRadius: BorderRadius.all(Radius.circular(5))
-                ),
-                child: Center(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 4,vertical: 4),
-                    child: Row(
-                      children: [
-                        getText("Detayları görüntüle", 12, "FontNormal", appColors.white, TextAlign.center),
-                        Icon(Icons.arrow_forward_ios_rounded,color: appColors.white,size: 11,)
-                      ],
+              GestureDetector(
+                onTap: () {
+                  int mode= 1;
+                  ref.read(profilePageRiverpod).setSupplyDetailsId(data);
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => SupplyDetailsPage(mode: mode,)),
+                  );
+                },
+                child: Container(
+                  decoration: BoxDecoration(
+                      color: appColors.blueDark,
+                      borderRadius: BorderRadius.all(Radius.circular(5))
+                  ),
+                  child: Center(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 4,vertical: 4),
+                      child: Row(
+                        children: [
+                          getText("Detayları görüntüle", 12, "FontNormal", appColors.white, TextAlign.center),
+                          Icon(Icons.arrow_forward_ios_rounded,color: appColors.white,size: 11,)
+                        ],
+                      ),
                     ),
                   ),
                 ),

@@ -6,6 +6,7 @@ import 'package:intl/intl.dart';
 import 'package:tedarikten/constants/app_colors.dart';
 import 'package:tedarikten/models/combined_info.dart';
 import 'package:tedarikten/models/supply_info.dart';
+import 'package:tedarikten/pages/supply_details_page.dart';
 import 'package:tedarikten/riverpod_management.dart';
 import 'package:tedarikten/utils/firestore_helper.dart';
 
@@ -152,13 +153,22 @@ class _MyActivePostsState extends ConsumerState<MyActivePosts> {
                   getText("${data.userInfo.name} ${data.userInfo.surname}", 14, "FontNormal", appColors.blackLight,TextAlign.start)
                 ],
               ),
-              Container(height: 16,width: 36,
-                padding: EdgeInsets.symmetric(horizontal: 6),
-                decoration: BoxDecoration(
-                    color: getStatusColor(),
-                    borderRadius: BorderRadius.all(Radius.circular(10))
-                ),
-                child: Image(color:appColors.white,fit: BoxFit.fitWidth,image: AssetImage("assets/icons/dots.png")),)
+              GestureDetector(
+                onTapDown: (TapDownDetails details) async {
+                  if(widget.mode == 0){
+                    await _showPopupMenu(details.globalPosition,data.supplyInfo.id!,user!.uid,data.userInfo.id);
+                  }else if(widget.mode == 1){
+                    await _showPopupMenuOtherUser(details.globalPosition);
+                  }
+                },
+                child: Container(height: 16,width: 36,
+                  padding: EdgeInsets.symmetric(horizontal: 6),
+                  decoration: BoxDecoration(
+                      color: getStatusColor(),
+                      borderRadius: BorderRadius.all(Radius.circular(10))
+                  ),
+                  child: Image(color:appColors.white,fit: BoxFit.fitWidth,image: AssetImage("assets/icons/dots.png")),),
+              )
             ],
           ),
           Row(
@@ -225,20 +235,33 @@ class _MyActivePostsState extends ConsumerState<MyActivePosts> {
                     crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
                       getText(getCompleteStatus(), 13, "FontNormal", appColors.blueDark,TextAlign.right),
-                      Container(
-                        height: 20,
-                        decoration: BoxDecoration(
-                            color: appColors.blueDark,
-                            borderRadius: BorderRadius.all(Radius.circular(5))
-                        ),
-                        child: Center(
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 4),
-                            child: Row(
-                              children: [
-                                getText("Detayları görüntüle", 12, "FontNormal", appColors.white, TextAlign.center),
-                                Icon(Icons.arrow_forward_ios_rounded,color: appColors.white,size: 11,)
-                              ],
+                      GestureDetector(
+                        onTap: () {
+                          int mode= 0;
+                          if(user!.uid == data.supplyInfo.userId){
+                            mode = 1;
+                          }
+                          ref.read(profilePageRiverpod).setSupplyDetailsId(data);
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (context) => SupplyDetailsPage(mode: mode,)),
+                          );
+                        },
+                        child: Container(
+                          height: 20,
+                          decoration: BoxDecoration(
+                              color: appColors.blueDark,
+                              borderRadius: BorderRadius.all(Radius.circular(5))
+                          ),
+                          child: Center(
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 4),
+                              child: Row(
+                                children: [
+                                  getText("Detayları görüntüle", 12, "FontNormal", appColors.white, TextAlign.center),
+                                  Icon(Icons.arrow_forward_ios_rounded,color: appColors.white,size: 11,)
+                                ],
+                              ),
                             ),
                           ),
                         ),
@@ -264,5 +287,43 @@ class _MyActivePostsState extends ConsumerState<MyActivePosts> {
           fontSize: size,
           fontFamily: family
       ),);
+  }
+
+  _showPopupMenu(Offset offset,String documentId,String currentUserId,String otherUserId) async {
+    double left = offset.dx;
+    double top = offset.dy;
+    await showMenu(
+      context: context,
+      position: RelativeRect.fromLTRB(left, top+12, 12, 0),
+      items: [
+        PopupMenuItem<String>(
+          child: const Text('Sil'), value: 'Sil',onTap: () async{
+          String message = await FirestoreService().deleteSupply(documentId,currentUserId,otherUserId);
+          print(message);
+          setState(() {
+
+          });
+        },),
+      ],
+      elevation: 8.0,
+    );
+  }
+
+  _showPopupMenuOtherUser(Offset offset) async {
+    double left = offset.dx;
+    double top = offset.dy;
+    await showMenu(
+      context: context,
+      position: RelativeRect.fromLTRB(left, top+12, 12, 0),
+      items: [
+        PopupMenuItem<String>(
+          child: const Text('Bildir'), value: 'Bildir',onTap: () async{
+          setState(() {
+
+          });
+        },),
+      ],
+      elevation: 8.0,
+    );
   }
 }

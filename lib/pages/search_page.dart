@@ -39,8 +39,8 @@ class _SearchPageState extends ConsumerState<SearchPage> {
           textAlign: TextAlign.center,
           text: TextSpan(
             children: <TextSpan>[
-              TextSpan(text: 'Arama yapabilmek için', style: TextStyle(fontFamily: "FontNormal",color: appColors.black,fontSize: 15)),
-              TextSpan(text: 'giriş yapmalısınız',style: TextStyle(fontFamily: "FontBold",color: appColors.blueDark,fontSize: 15)),
+              TextSpan(text: 'Arama yapabilmek için\n', style: TextStyle(fontFamily: "FontNormal",color: appColors.black,fontSize: 15)),
+              TextSpan(text: 'giriş yapmalısınız',style: TextStyle(fontFamily: "FontBold",color: appColors.orange,fontSize: 15)),
             ],
           ),
         ),

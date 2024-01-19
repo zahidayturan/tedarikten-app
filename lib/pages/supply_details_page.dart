@@ -1361,6 +1361,7 @@ class _SupplyDetailsPageState extends ConsumerState<SupplyDetailsPage> {
 
     return result;
   }
+
   Widget topWidget(){
     return Container(
       height: 230,
@@ -1374,14 +1375,14 @@ class _SupplyDetailsPageState extends ConsumerState<SupplyDetailsPage> {
           ),
           Padding(
             padding: const EdgeInsets.all(10.0),
-            child: Column(
+            child: user != null ?  Column(
               mainAxisAlignment: MainAxisAlignment.start,
               children: [
                 pageTopController(),
-                userInfo(),
+                userInfo() ,
                 buttons(),
                ],
-            ),
+            ): Center(child: Text("Giriş yapmadınız",style: TextStyle(color: Colors.white),))
           ),
 
         ],
@@ -1417,13 +1418,23 @@ class _SupplyDetailsPageState extends ConsumerState<SupplyDetailsPage> {
           child: Text("İlan Detayları",style: TextStyle(color: appColors.white,fontSize: 18,fontFamily: "FontNormal"),),
         ),
         Spacer(),
-        Container(height: 16,width: 36,
-          padding: EdgeInsets.symmetric(horizontal: 6),
-          decoration: BoxDecoration(
-              color: appColors.blueDark,
-              borderRadius: BorderRadius.all(Radius.circular(10))
-          ),
-          child: Image(color:appColors.white,fit: BoxFit.fitWidth,image: AssetImage("assets/icons/dots.png")),)
+        GestureDetector(
+          onTapDown: (TapDownDetails details) async {
+            if(widget.mode == 1){
+              await _showPopupMenuOtherUser(details.globalPosition);
+            }else if(widget.mode == 0 || widget.mode == 2){
+              await _showPopupMenuOtherUser(details.globalPosition);
+            }
+          },
+
+          child: Container(height: 16,width: 36,
+            padding: EdgeInsets.symmetric(horizontal: 6),
+            decoration: BoxDecoration(
+                color: appColors.blueDark,
+                borderRadius: BorderRadius.all(Radius.circular(10))
+            ),
+            child: Image(color:appColors.white,fit: BoxFit.fitWidth,image: AssetImage("assets/icons/dots.png")),),
+        )
       ],
     );
   }
@@ -1546,6 +1557,23 @@ class _SupplyDetailsPageState extends ConsumerState<SupplyDetailsPage> {
     )),);
   }
 
+  _showPopupMenuOtherUser(Offset offset) async {
+    double left = offset.dx;
+    double top = offset.dy;
+    await showMenu(
+      context: context,
+      position: RelativeRect.fromLTRB(left, top+12, 12, 0),
+      items: [
+        PopupMenuItem<String>(
+          child: const Text('Bildir'), value: 'Bildir',onTap: () async{
+          setState(() {
+
+          });
+        },),
+      ],
+      elevation: 8.0,
+    );
+  }
 
   List<String> typeSupplyList = [
     "Türü Seçin",

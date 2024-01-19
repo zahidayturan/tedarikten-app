@@ -19,9 +19,8 @@ class _IntroductionPageState extends ConsumerState<IntroductionPage> {
   void initState() {
     super.initState();
   }
-
+  final appColors = AppColors();
   Widget build(BuildContext context){
-    final appColors = AppColors();
     return SafeArea(child: Scaffold(
       body: Padding(
         padding: const EdgeInsets.all(10.0),
@@ -66,13 +65,14 @@ class _IntroductionPageState extends ConsumerState<IntroductionPage> {
               children: [
                 GestureDetector(
                   onTap: () async{
-                    final SharedPreferences prefs = await SharedPreferences.getInstance();
+                      showQuesitonDialog();
+                    /*final SharedPreferences prefs = await SharedPreferences.getInstance();
                     await prefs.setBool("showApp", true);
                     final bool showApp = prefs.getBool("showApp") ?? false;
                     Navigator.push(
                       context,
                       MaterialPageRoute(builder: (context) => MyAppBase(showApp: showApp)),
-                    );
+                    );*/
                   },
                     child: getText("Hesap olmadan ", "göz at",16, appColors.blue)),
               ],
@@ -120,6 +120,31 @@ class _IntroductionPageState extends ConsumerState<IntroductionPage> {
         child: Text(
           text, style: TextStyle(color: textColor,fontSize: 16),
         ),
+      ),
+    );
+  }
+
+  void showQuesitonDialog(){
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+          backgroundColor: appColors.blueDark,
+          duration: const Duration(seconds: 3),
+          elevation: 0,
+          behavior: SnackBarBehavior.floating,
+          content: const Center(
+            child: Text(
+              "Henüz yapamazsınız",
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 16,
+                fontFamily: 'FontNormal',
+                height: 1,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ),
+          shape: const RoundedRectangleBorder(
+              borderRadius: BorderRadius.all(Radius.circular(5)))
       ),
     );
   }

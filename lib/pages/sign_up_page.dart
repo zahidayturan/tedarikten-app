@@ -32,11 +32,10 @@ class _SignUpPageState extends ConsumerState<SignUpPage> {
   final TextEditingController cityController = TextEditingController();
   final TextEditingController countryController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
-
+  final appColors = AppColors();
   @override
   Widget build(BuildContext context) {
     var size = MediaQuery.of(context).size;
-    final appColors = AppColors();
     return SafeArea(
       child: Scaffold(
         backgroundColor: appColors.whiteDark,
@@ -58,19 +57,19 @@ class _SignUpPageState extends ConsumerState<SignUpPage> {
                         color: appColors.blueDark,
                         height: 1),),
                 ),
-                getTextField(context, nameController, "Ad",_nameKey),
+                getTextField(context, nameController, "Ad",_nameKey,16),
                 SizedBox(height: 16.0),
-                getTextField(context, surnameController, "Soyad",_surnameKey),
+                getTextField(context, surnameController, "Soyad",_surnameKey,12),
                 SizedBox(height: 16.0),
-                getTextField(context, emailController, "E-posta",_emailKey),
+                getTextField(context, emailController, "E-posta",_emailKey,36),
                 SizedBox(height: 16.0),
-                getTextField(context, professionController, "Meslek",_professionKey),
+                getTextField(context, professionController, "Meslek",_professionKey,24),
                 SizedBox(height: 16.0),
-                getTextField(context, cityController, "Şehir",_cityKey),
+                getTextField(context, cityController, "Şehir",_cityKey,16),
                 SizedBox(height: 16.0),
-                getTextField(context, countryController, "Ülke",_countryKey),
+                getTextField(context, countryController, "Ülke",_countryKey,16),
                 SizedBox(height: 16.0),
-                getTextField(context, passwordController, "Şifre",_passwordKey),
+                getTextField(context, passwordController, "Şifre",_passwordKey,96),
                 SizedBox(height: 16.0),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.end,
@@ -96,15 +95,19 @@ class _SignUpPageState extends ConsumerState<SignUpPage> {
                             },
                             barrierDismissible: false, // Kullanıcının dışarı tıklamasını engeller
                           );
-                          await signUpWithEmailAndPassword();
-                          final SharedPreferences prefs = await SharedPreferences.getInstance();
-                          await prefs.setBool("showApp", true);
-                          final bool showApp = prefs.getBool("showApp") ?? false;
-                          Navigator.pop(context);
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(builder: (context) => MyAppBase(showApp: showApp)),
-                          );
+                          String response = await signUpWithEmailAndPassword();
+                          if(response == "Ok"){
+                            final SharedPreferences prefs = await SharedPreferences.getInstance();
+                            await prefs.setBool("showApp", true);
+                            final bool showApp = prefs.getBool("showApp") ?? false;
+                            Navigator.pop(context);
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(builder: (context) => MyAppBase(showApp: showApp)),
+                            );
+                          }else{
+                            showSignupErrorDialog(context,"Lütfen internet bağlantınız kontrol edip tekrar deneyin");
+                          }
                         }else{
                           ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
@@ -185,22 +188,27 @@ class _SignUpPageState extends ConsumerState<SignUpPage> {
               image: AssetImage(
                   "assets/logo/icon.png")),
         ),
-        Container(
-          width: 28,
-          height: 28,
-          padding: EdgeInsets.all(6),
-          decoration: BoxDecoration(
-            color: appColors.blueDark,
-              shape: BoxShape.circle,
+        GestureDetector(
+          onTap: () {
+            showQuesitonDialog();
+          },
+          child: Container(
+            width: 28,
+            height: 28,
+            padding: EdgeInsets.all(6),
+            decoration: BoxDecoration(
+              color: appColors.blueDark,
+                shape: BoxShape.circle,
 
-          ),
-          child: Image(
-            fit: BoxFit.fitHeight,
-            color: appColors.white,
-            image: AssetImage(
-                "assets/icons/question.png"
             ),
-          ),)
+            child: Image(
+              fit: BoxFit.fitHeight,
+              color: appColors.white,
+              image: AssetImage(
+                  "assets/icons/question.png"
+              ),
+            ),),
+        )
       ],
     );
   }
@@ -277,7 +285,7 @@ class _SignUpPageState extends ConsumerState<SignUpPage> {
   }
 
 
-  Widget getTextField(BuildContext context,TextEditingController controller,String text,Key key){
+  Widget getTextField(BuildContext context,TextEditingController controller,String text,Key key,int length){
     final appColors = AppColors();
     return Form(
       key: key,
@@ -301,7 +309,9 @@ class _SignUpPageState extends ConsumerState<SignUpPage> {
             return passwordValidate(value);
           }
         },
+        maxLength: length,
         decoration: InputDecoration(
+          counterText: "",
             labelText: text,
             labelStyle: TextStyle(color: appColors.blueDark),
             enabledBorder: OutlineInputBorder(
@@ -325,15 +335,17 @@ class _SignUpPageState extends ConsumerState<SignUpPage> {
 
   }
 
-  Future<void> signUpWithEmailAndPassword() async {
+  Future<String> signUpWithEmailAndPassword() async {
     try {
       UserCredential userCredential = await FirebaseAuth.instance.createUserWithEmailAndPassword(
         email: emailController.text,
         password: passwordController.text,
       );
       await addTUserInfoToFirestore(userCredential.user!.uid, TUserInfo(id: userCredential.user!.uid, name: nameController.text, surname: surnameController.text, email: emailController.text,profession: professionController.text, city: cityController.text, country: countryController.text,advertList: [],companyList: [],followerList: [],followList: []));
+      return "Ok";
     } catch (e) {
       print('Kayıt hatası: $e');
+      return "Error";
     }
   }
 
@@ -345,6 +357,51 @@ class _SignUpPageState extends ConsumerState<SignUpPage> {
     } catch (e) {
       print('Kayıt hatası: $e');
     }
+  }
+
+  void showSignupErrorDialog(BuildContext context, String errorMessage) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Kayıtlanma hatası'),
+          content: Text(errorMessage),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: Text('Tamam'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void showQuesitonDialog(){
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+          backgroundColor: appColors.blueDark,
+          duration: const Duration(seconds: 3),
+          elevation: 0,
+          behavior: SnackBarBehavior.floating,
+          content: const Center(
+            child: Text(
+              "Kayıt olurken sorun yaşarsanız internet bağlantınız kontrol edip tekrar deneyiniz.",
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 16,
+                fontFamily: 'FontNormal',
+                height: 1,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ),
+          shape: const RoundedRectangleBorder(
+              borderRadius: BorderRadius.all(Radius.circular(5)))
+      ),
+    );
   }
 
 }

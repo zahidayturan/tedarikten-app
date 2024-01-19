@@ -16,4 +16,11 @@ class HomePageRiverpod extends ChangeNotifier {
     notifyListeners();
   }
 
+  bool setState = false;
+
+  void setHomePage() {
+    setState = !setState;
+    notifyListeners();
+  }
+
 }
