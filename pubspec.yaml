@@ -18,6 +18,7 @@ dependencies:
   firebase_messaging: ^14.7.10
   shared_preferences: ^2.2.0
   intl: any
+  mockito: any
 
 dev_dependencies:
   flutter_test:

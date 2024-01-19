@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:tedarikten/constants/app_colors.dart';
 import 'package:tedarikten/models/user_info.dart';
+import 'package:tedarikten/pages/easyAccess/registered_supply_page.dart';
 import 'package:tedarikten/pages/homePage/active_adverts.dart';
 import 'package:tedarikten/pages/homePage/my_active_adverts.dart';
 import 'package:tedarikten/pages/login_page.dart';
@@ -68,7 +69,14 @@ class _MyHomePageState extends ConsumerState<HomePage> {
             const SizedBox(width: 10,),
             getContainerForEasyAccess(appColors.blue,const Color(0XFF8FA9B1),"Yakınında\n","Olan\nİlanları\nGörüntüle","assets/icons/location.png"),
             const SizedBox(width: 10,),
-            getContainerForEasyAccess(appColors.blueDark,const Color(0XFF16697A),"Kayıtlı\n","İlanları\nGörüntüle","assets/icons/bookmark.png"),
+            GestureDetector(
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => RegisteredSupplyPage()),
+                  );
+                },
+                child: getContainerForEasyAccess(appColors.blueDark,const Color(0XFF16697A),"Kayıtlı\n","İlanları\nGörüntüle","assets/icons/bookmark.png")),
           ],
         ),
       ),
