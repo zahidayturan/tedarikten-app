@@ -21,7 +21,7 @@ class _NotificationsPage extends ConsumerState<NotificationsPage> {
   User? user = FirebaseAuth.instance.currentUser;
   FirestoreService firestoreService = FirestoreService();
   final appColors = AppColors();
-  int notificationsCount = 0;
+
   @override
   void initState(){
     super.initState();
@@ -60,7 +60,7 @@ class _NotificationsPage extends ConsumerState<NotificationsPage> {
         ),
       );
     }else{
-      return FutureBuilder<List<NotificationInfo>>(
+      return FutureBuilder<List<CombinedNotificationInfo>>(
         future: FirestoreService().getNotificationsByUserId(user!.uid),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
@@ -71,7 +71,7 @@ class _NotificationsPage extends ConsumerState<NotificationsPage> {
           } else if (snapshot.hasError) {
             return Center(child: Text("Bir sorun oluştu",style:  TextStyle(color: appColors.blueDark),));
           }else{
-            List<NotificationInfo>? notifications = snapshot.data;
+            List<CombinedNotificationInfo>? notifications = snapshot.data;
             if(notifications!.isEmpty){
               return Center(
                 child: RichText(
@@ -104,10 +104,10 @@ class _NotificationsPage extends ConsumerState<NotificationsPage> {
     }
   }
 
-  Widget getPostContainer(NotificationInfo data) {
+  Widget getPostContainer(CombinedNotificationInfo data) {
     var size = MediaQuery.of(context).size;
 
-    DateTime dateTime =  DateTime.parse(data.date);
+    DateTime dateTime =  DateTime.parse(data.notificationInfo.date);
     String sharingDate = DateFormat('dd.MM.yyyy').format(dateTime);
     String sharingTime = DateFormat('HH:mm').format(dateTime);
     
@@ -117,7 +117,7 @@ class _NotificationsPage extends ConsumerState<NotificationsPage> {
       padding: const EdgeInsets.all(10),
       child: SizedBox(
         width: size.width,
-        height: 88,
+        height: 72,
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
@@ -126,7 +126,7 @@ class _NotificationsPage extends ConsumerState<NotificationsPage> {
               margin: EdgeInsets.only(right: 10),
               padding: EdgeInsets.all(8.0),
               decoration: BoxDecoration(
-                color: appColors.orange,
+                color: appColors.blueDark,
                 borderRadius: BorderRadius.all(Radius.circular(5)),
               ),
             ),
@@ -141,47 +141,72 @@ class _NotificationsPage extends ConsumerState<NotificationsPage> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(data.title),
-                    Text(data.senderId),
+                    getText("${data.userInfo.name} ${data.userInfo.surname} ", data.notificationInfo.title, 15, appColors.blackLight),
+
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text(sharingDate),
-                        Text(sharingTime)
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text("$sharingDate "),
+                            Text(sharingTime)
+                          ],
+                        ),
+                        GestureDetector(
+                            onTap: () async{
+                              await FirestoreService().deleteNotifications(data.notificationInfo.id!);
+                              setState(() {
+
+                              });
+                              },
+                            child: getButton("Sil", appColors.pink, appColors.blackLight, 13,Icons.delete_forever_rounded)),
+                        Visibility(
+                          visible: data.notificationInfo.isRead == false,
+                          child: GestureDetector(
+                              onTap: () async {
+                                await FirestoreService().updateNotifications(data.notificationInfo.id!);
+                                setState(() {
+
+                                });
+                                },
+                              child: getButton("Okudum", appColors.blueLight, appColors.blackLight, 13,Icons.check_rounded)),
+                        ),
+                        Visibility(
+                            visible: data.notificationInfo.isRead == true,
+                            child: Text("Okundu",style: TextStyle(color: appColors.blueDark),)),
                       ],
                     )
                   ],
                 ),
               ),
             ),
-            Padding(
-              padding: const EdgeInsets.only(left: 8),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
-                children: [
-                  getButton("Sil", appColors.pink, appColors.white, 15),
-                  getButton("Okudum", appColors.blueLight, appColors.white, 15)
-                ],
-              ),
-            )
           ],
         ),
       ),
     );
   }
 
-  Widget getButton(String text,Color buttonColor,Color textColor,double fontSize){
+  Widget getButton(String text,Color buttonColor,Color textColor,double fontSize,IconData icon){
     var size = MediaQuery.of(context).size;
-    return Container(
-      width: 80,
-      decoration: BoxDecoration(
-          color: buttonColor,
-          borderRadius: BorderRadius.all(Radius.circular(5))
-      ),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 4,horizontal: 6),
-        child: Center(child: Text(text, style: TextStyle(color: textColor,fontSize: fontSize,fontFamily: "FontNormal"))),
-      ),
+    return Row(
+      children: [
+        Container(
+          width: 24,
+          decoration: BoxDecoration(
+              color: buttonColor,
+              borderRadius: BorderRadius.all(Radius.circular(5))
+          ),
+          child: Icon(
+            icon,
+            color: appColors.white,
+          )
+        ),
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: 4,horizontal: 6),
+          child: Center(child: Text(text, style: TextStyle(color: textColor,fontSize: fontSize,fontFamily: "FontNormal"))),
+        ),
+      ],
     );
   }
 
@@ -210,7 +235,7 @@ class _NotificationsPage extends ConsumerState<NotificationsPage> {
                 pageTopController(),
                 Padding(
                   padding: const EdgeInsets.only(top: 36,left: 36),
-                  child: getText("Okunmamış\nBildiriminiz Var","${notificationsCount} Adet\n", 18, appColors.white),
+                  child: user != null ? getNotificationCount() : Text("Henüz\ngiriş\nyapmadınız",style: TextStyle(color: appColors.white),),
                 )
                 
               ],
@@ -257,13 +282,29 @@ class _NotificationsPage extends ConsumerState<NotificationsPage> {
       textAlign: TextAlign.start,
       text: TextSpan(
         children: <TextSpan>[
-          TextSpan(text: textBold,style: TextStyle(fontFamily: "FontBold",fontSize: fontSize,color: color)),
           TextSpan(text: textNormal, style: TextStyle(fontFamily: "FontNormal",fontSize: fontSize,color: color)),
+          TextSpan(text: textBold,style: TextStyle(fontFamily: "FontBold",fontSize: fontSize,color: color)),
         ],
       ),
     );
   }
 
-
+  Widget getNotificationCount(){
+    return FutureBuilder<String>(
+      future: FirestoreService().getNotificationCountFromFirestore(user!.uid),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return CircularProgressIndicator(color: appColors.orange,);
+        } else if (snapshot.hasError) {
+          return const Text('?');
+        } else {
+          String count = snapshot.data ?? "0";
+          return count != "0" ?
+          getText("$count Adet\n", "Okunmamış\nBildiriminiz Var", 18, appColors.white)
+              : getText("Henüz\nBildiriminiz\n","Yok", 18, appColors.white);
+        }
+      },
+    );
+  }
 }
 

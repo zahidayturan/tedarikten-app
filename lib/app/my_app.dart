@@ -20,7 +20,7 @@ class _MyAppBase extends ConsumerState<MyAppBase> {
   void loadData()  async {
     User? user = FirebaseAuth.instance.currentUser;
     if(user != null){
-      await FirestoreService().getUserInfo(user!.uid).then((value) {
+      await FirestoreService().getUserInfo(user.uid).then((value) {
         ref.read(firebaseControllerRiverpod).fetchUser(value!);
       });
     }

@@ -10,6 +10,7 @@ import 'package:tedarikten/models/combined_info.dart';
 import 'package:tedarikten/pages/profileInfoPage/profile_info_page.dart';
 import 'package:tedarikten/riverpod_management.dart';
 import 'package:tedarikten/utils/firestore_helper.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class SupplyDetailsPage extends ConsumerStatefulWidget {
   late int mode;
@@ -758,9 +759,24 @@ class _SupplyDetailsPageState extends ConsumerState<SupplyDetailsPage> {
             padding: const EdgeInsets.only(bottom: 8,top: 12),
             child: getText("Ek Dosyalar", 18, appColors.orange, "FontBold", TextAlign.start),
           ),
-          Padding(
-            padding: const EdgeInsets.only(left: 16,bottom: 6),
-            child: getText("Ek dosya eklenmemiş", 15, appColors.black, "FontNormal", TextAlign.start),
+          GestureDetector(
+            onTap: () async{
+              if(data.supplyInfo.documentId != "0"){
+                String url = await FirestoreService().openFileUrl(data.supplyInfo.documentId);
+                void launchURL() async {
+                  if (await canLaunch(url)) {
+                    await launch(url);
+                  } else {
+                    throw 'URL açılamadı: $url';
+                  }
+                }
+              }
+
+            },
+            child: Padding(
+              padding: const EdgeInsets.only(left: 16,bottom: 6),
+              child: getText(data.supplyInfo.documentId != "0" ? data.supplyInfo.documentId :"Ek dosya eklenmemiş", 15,data.supplyInfo.documentId != "0" ? appColors.blue : appColors.black, "FontNormal", TextAlign.start),
+            ),
           ),
 
 
@@ -1035,7 +1051,7 @@ class _SupplyDetailsPageState extends ConsumerState<SupplyDetailsPage> {
           ),
           Padding(
             padding: const EdgeInsets.only(left: 16,bottom: 6),
-            child: getText("Ek dosya eklenmemiş", 15, appColors.black, "FontNormal", TextAlign.start),
+            child: getText(data.supplyInfo.documentId != "0" ? "${data.supplyInfo.documentId}" :"Ek dosya eklenmemiş", 15, appColors.black, "FontNormal", TextAlign.start),
           ),
 
 
@@ -1361,6 +1377,7 @@ class _SupplyDetailsPageState extends ConsumerState<SupplyDetailsPage> {
 
     return result;
   }
+
   Widget topWidget(){
     return Container(
       height: 230,
@@ -1374,14 +1391,14 @@ class _SupplyDetailsPageState extends ConsumerState<SupplyDetailsPage> {
           ),
           Padding(
             padding: const EdgeInsets.all(10.0),
-            child: Column(
+            child: user != null ?  Column(
               mainAxisAlignment: MainAxisAlignment.start,
               children: [
                 pageTopController(),
-                userInfo(),
+                userInfo() ,
                 buttons(),
                ],
-            ),
+            ): Center(child: Text("Giriş yapmadınız",style: TextStyle(color: Colors.white),))
           ),
 
         ],
@@ -1417,13 +1434,23 @@ class _SupplyDetailsPageState extends ConsumerState<SupplyDetailsPage> {
           child: Text("İlan Detayları",style: TextStyle(color: appColors.white,fontSize: 18,fontFamily: "FontNormal"),),
         ),
         Spacer(),
-        Container(height: 16,width: 36,
-          padding: EdgeInsets.symmetric(horizontal: 6),
-          decoration: BoxDecoration(
-              color: appColors.blueDark,
-              borderRadius: BorderRadius.all(Radius.circular(10))
-          ),
-          child: Image(color:appColors.white,fit: BoxFit.fitWidth,image: AssetImage("assets/icons/dots.png")),)
+        GestureDetector(
+          onTapDown: (TapDownDetails details) async {
+            if(widget.mode == 1){
+              await _showPopupMenuOtherUser(details.globalPosition);
+            }else if(widget.mode == 0 || widget.mode == 2){
+              await _showPopupMenuOtherUser(details.globalPosition);
+            }
+          },
+
+          child: Container(height: 16,width: 36,
+            padding: EdgeInsets.symmetric(horizontal: 6),
+            decoration: BoxDecoration(
+                color: appColors.blueDark,
+                borderRadius: BorderRadius.all(Radius.circular(10))
+            ),
+            child: Image(color:appColors.white,fit: BoxFit.fitWidth,image: AssetImage("assets/icons/dots.png")),),
+        )
       ],
     );
   }
@@ -1546,6 +1573,23 @@ class _SupplyDetailsPageState extends ConsumerState<SupplyDetailsPage> {
     )),);
   }
 
+  _showPopupMenuOtherUser(Offset offset) async {
+    double left = offset.dx;
+    double top = offset.dy;
+    await showMenu(
+      context: context,
+      position: RelativeRect.fromLTRB(left, top+12, 12, 0),
+      items: [
+        PopupMenuItem<String>(
+          child: const Text('Bildir'), value: 'Bildir',onTap: () async{
+          setState(() {
+
+          });
+        },),
+      ],
+      elevation: 8.0,
+    );
+  }
 
   List<String> typeSupplyList = [
     "Türü Seçin",

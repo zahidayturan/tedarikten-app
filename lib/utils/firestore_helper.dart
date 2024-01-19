@@ -1,12 +1,18 @@
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter/material.dart';
+import 'package:firebase_storage/firebase_storage.dart';
+import 'package:path/path.dart';
 import 'package:tedarikten/models/application_supply_info.dart';
 import 'package:tedarikten/models/company_info.dart';
 import 'package:tedarikten/models/notification_info.dart';
 import 'package:tedarikten/models/supply_info.dart';
 import 'package:tedarikten/models/user_info.dart';
 import 'package:tedarikten/models/combined_info.dart';
+import 'dart:io';
+
+import 'package:url_launcher/url_launcher.dart';
+
 
 class FirestoreService {
 
@@ -382,6 +388,8 @@ class FirestoreService {
           'registeredList': FieldValue.arrayUnion([supply.id]),
         });
 
+        await addNotificationToFirestore(NotificationInfo(title: "ilanını kaydetti",date: DateTime.now().toString(),isRead: false,senderId: user!.uid,userId: supply.userId));
+
         //registrantsIdList
       } else {
         print('Kullanıcı bulunamadı');
@@ -399,6 +407,40 @@ class FirestoreService {
       return 'Error';
     }
   }
+
+  Future<String> updateSave(String userId, String supplyId) async {
+    try {
+      QuerySnapshot userSnapshot = await _firestore
+          .collection('users')
+          .where('id', isEqualTo: userId)
+          .get();
+
+      if (userSnapshot.docs.isNotEmpty) {
+        DocumentReference userDocRef = userSnapshot.docs.first.reference;
+        DocumentSnapshot userDocSnapshot = await userDocRef.get();
+        Map<String, dynamic> userData = userDocSnapshot.data() as Map<String, dynamic>;
+        List<String> registeredList = List<String>.from(userData['registeredList']);
+        registeredList.remove(supplyId);
+        await userDocRef.update({'registeredList': registeredList});
+
+        DocumentReference supplyDocRef = _firestore.collection('supplies').doc(supplyId);
+        DocumentSnapshot supplySnapshot = await supplyDocRef.get();
+        Map<String, dynamic> supplyData = supplySnapshot.data() as Map<String, dynamic>;
+        List<String> registeredListSupply = List<String>.from(supplyData['registrantsIdList']);
+        registeredListSupply.remove(userId);
+        await supplyDocRef.update({'registrantsIdList': registeredListSupply});
+
+        return "Ok";
+      } else {
+        print("User document not found");
+        return "Error";
+      }
+    } catch (e) {
+      print('Belge güncellenirken bir hata oluştu: $e');
+      return "Error";
+    }
+  }
+
 
   Future<String> advertApply(ApplicationSupplyInfo application) async {
 
@@ -441,6 +483,16 @@ class FirestoreService {
       await FirebaseFirestore.instance.collection('supplies').doc(application.supplyId).update({
         'applicantsIdList': FieldValue.arrayUnion([documentId]),
       });
+
+      var userQuerySnapshot = await FirebaseFirestore.instance
+          .collection('supplies')
+          .where('id', isEqualTo: application.supplyId)
+          .get();
+
+      var userId = userQuerySnapshot.docs[0]['userId'];
+
+      await addNotificationToFirestore(NotificationInfo(title: "ilanına başvurdu",date: DateTime.now().toString(),isRead: false,senderId: user!.uid,userId: userId));
+
       return "Ok";
     } catch (e) {
       return 'Error';
@@ -679,17 +731,65 @@ class FirestoreService {
   }
 
 
-  Future<List<NotificationInfo>> getNotificationsByUserId(String userId) async {
+  Future<List<CombinedNotificationInfo>> getNotificationsByUserId(String userId) async {
+    List<CombinedNotificationInfo> combinedNotifications = [];
+
     final CollectionReference notifications = FirebaseFirestore.instance.collection('notifications');
-    QuerySnapshot querySnapshot =
-    await notifications.where('userId', isEqualTo: userId).get();
+    QuerySnapshot querySnapshot = await notifications
+        .where('userId', isEqualTo: userId)
+        .get();
 
     List<NotificationInfo> notificationsList = querySnapshot.docs
         .map((doc) => NotificationInfo.fromJson(doc.data() as Map<String, dynamic>))
         .toList();
 
-    return notificationsList;
+    for (NotificationInfo notification in notificationsList) {
+      var applicantUserId = notification.senderId;
+
+      // Fetch user information for the sender
+      var userQuerySnapshot = await FirebaseFirestore.instance
+          .collection('users')
+          .where('id', isEqualTo: applicantUserId)
+          .get();
+
+      if (userQuerySnapshot.docs.isNotEmpty) {
+        // Assuming 'TUserInfo.fromJson' is the correct method to convert user data
+        var userInfo = TUserInfo.fromJson(userQuerySnapshot.docs.first.data() as Map<String, dynamic>);
+
+        // Create CombinedNotificationInfo and add it to the list
+        var combinedNotification = CombinedNotificationInfo(
+          notificationInfo: notification,
+          userInfo: userInfo,
+        );
+        combinedNotifications.add(combinedNotification);
+      }
+    }
+
+    return combinedNotifications;
   }
+
+  Future<String> deleteNotifications(String notificationId) async {
+    try {
+      await FirebaseFirestore.instance.collection('notifications').doc(notificationId).delete();
+      return "Ok";
+    } catch (e) {
+      print('Belge silinirken bir hata oluştu: $e');
+      return "Error";
+    }
+  }
+
+  Future<String> updateNotifications(String applicationId) async {
+    try {
+      await FirebaseFirestore.instance.collection('notifications').doc(applicationId).update({
+        'isRead': true,
+      });
+      return "Ok";
+    } catch (e) {
+      print('Belge güncellenirken bir hata oluştu: $e');
+      return "Error";
+    }
+  }
+
 
   Future<List<CombinedInfo>> searchSupply(String searchText) async {
     try {
@@ -753,5 +853,186 @@ class FirestoreService {
     return [];
   }
 
+
+  Future<List<CombinedInfo>> getRegisteredSupplyDataFromFirestore(String userId) async {
+    try {
+      var userQuerySnapshot = await FirebaseFirestore.instance
+          .collection('users')
+          .where('id', isEqualTo: userId)
+          .get();
+
+      var registeredList = userQuerySnapshot.docs[0]['registeredList'];
+
+      var querySnapshotForSupplies = await FirebaseFirestore.instance
+          .collection('supplies')
+          .where(FieldPath.documentId, whereIn: registeredList)
+          .get();
+
+      if (querySnapshotForSupplies.docs.isNotEmpty) {
+        List<DocumentSnapshot> documents = querySnapshotForSupplies.docs;
+        List<CombinedInfo?> userDataList = await Future.wait(documents.map((doc) async {
+          Map<String, dynamic> supplyData = doc.data()! as Map<String, dynamic>;
+
+
+          String userIdFromSupply = supplyData['userId'];
+            String companyId = supplyData['companyId'];
+
+            Map<String, dynamic> companyData = {};
+            if (companyId != "0") {
+              DocumentSnapshot companyDoc = await FirebaseFirestore.instance
+                  .collection('companies')
+                  .doc(companyId)
+                  .get();
+              companyData = companyDoc.data()! as Map<String, dynamic>;
+            } else {
+              CompanyInfo myDataInstance = CompanyInfo(
+                name: "",
+                location: "",
+                year: 11111,
+                phone: "",
+                address: "",
+                personNameSurname: "",
+                personEmail: "",
+                userId: "",
+              );
+              companyData = myDataInstance.toJson();
+            }
+
+            QuerySnapshot userQuerySnapshot = await FirebaseFirestore.instance
+                .collection('users')
+                .where("id", isEqualTo: userIdFromSupply)
+                .get();
+
+            Map<String, dynamic> userData = userQuerySnapshot.docs.first.data()! as Map<String, dynamic>;
+
+            return CombinedInfo.fromFirestore(supplyData, companyData, userData);
+        }).toList());
+
+        // Null'ları filtrele ve geri dön
+        return userDataList.where((element) => element != null).cast<CombinedInfo>().toList();
+      } else {
+        print('Belge bulunamadı.');
+        return [];
+      }
+    } catch (e, stackTrace) {
+      print('Veri çekme hatası: $e\n$stackTrace');
+      return [];
+    }
+  }
+
+  Future<String> getNotificationCountFromFirestore(String userId) async {
+    try {
+      var userQuerySnapshot = await FirebaseFirestore.instance
+          .collection('notifications')
+          .where('userId', isEqualTo: userId)
+          .where('isRead', isEqualTo: false)
+          .get();
+
+        var count = userQuerySnapshot.docs;
+        String result = count.length.toString();
+        return result;
+    } catch (e, stackTrace) {
+      print('Veri çekme hatası: $e\n$stackTrace');
+      return "0";
+    }
+  }
+
+  Future<String> getRegisteredCountFromFirestore(String userId) async {
+    try {
+      var userQuerySnapshot = await FirebaseFirestore.instance
+          .collection('users')
+          .where('id', isEqualTo: userId)
+          .get();
+
+      var registeredList = userQuerySnapshot.docs[0]['registeredList'];
+
+      if (registeredList is List) {
+        String result = registeredList.length.toString();
+
+        return result;
+      } else {
+        return "0";
+      }
+    } catch (e, stackTrace) {
+      print('Veri çekme hatası: $e\n$stackTrace');
+      return "0";
+    }
+  }
+
+  Future<String> getApplyActiveCountFromFirestore(String userId) async {
+    try {
+      var userQuerySnapshot = await FirebaseFirestore.instance
+          .collection('applications')
+          .where('applicantUserId', isEqualTo: userId)
+          .where('response', isEqualTo: "Yanıt Bekleniyor")
+          .get();
+
+      var registeredList = userQuerySnapshot.docs;
+
+        String result = registeredList.length.toString();
+        return result;
+    } catch (e, stackTrace) {
+      print('Veri çekme hatası: $e\n$stackTrace');
+      return "0";
+    }
+  }
+
+  Future<String> getOtherApplyActiveCountFromFirestore(String userId) async {
+    try {
+
+      var userQuerySnapshot = await FirebaseFirestore.instance
+          .collection('supplies')
+          .where('userId', isEqualTo: userId)
+          .get();
+
+      List<String> applicantsIdList = [];
+
+      for (var doc in userQuerySnapshot.docs) {
+        var supplyData = doc.data();
+        var currentApplicantsIdList = List<String>.from(
+            supplyData['applicantsIdList']
+        );
+        applicantsIdList.addAll(currentApplicantsIdList);
+      }
+
+      String result = applicantsIdList.length.toString();
+      return result;
+    } catch (e, stackTrace) {
+      print('Veri çekme hatası: $e\n$stackTrace');
+      return "0";
+    }
+  }
+
+  Future<String> uploadFile(String filePath, String fileName) async {
+    try {
+      File file = File(filePath);
+
+      Reference storageReference = FirebaseStorage.instance.ref().child('uploads/$fileName');
+      UploadTask uploadTask = storageReference.putFile(file);
+      await uploadTask.whenComplete(() => print('Dosya yüklendi'));
+
+      String downloadURL = await storageReference.getDownloadURL();
+      return "Ok";
+    } catch (e) {
+      print('Dosya yükleme hatası: $e');
+      return "Error";
+    }
+  }
+
+  Future<String> openFileUrl(String fileName) async {
+    try {
+      Reference storageReference = FirebaseStorage.instance.ref().child('uploads/$fileName');
+
+
+      String downloadURL = await storageReference.getDownloadURL();
+
+      print(downloadURL);
+
+      return downloadURL;
+    } catch (e) {
+      print('URL açma hatası: $e');
+      return "Error";
+    }
+  }
 
 }

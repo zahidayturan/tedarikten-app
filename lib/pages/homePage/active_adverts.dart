@@ -27,8 +27,6 @@ class _ActiveAdvertsState extends ConsumerState<ActiveAdverts> {
     super.initState();
   }
 
-  late List<CombinedInfo> userDataList = [];
-
 
   Widget build(BuildContext context) {
     return Column(
@@ -51,10 +49,12 @@ class _ActiveAdvertsState extends ConsumerState<ActiveAdverts> {
             future: FirestoreService().getActiveSupplyDataFromFirestoreAllUser(user!.uid),
             builder: (context, snapshot) {
               if (snapshot.connectionState == ConnectionState.waiting) {
-                return Container(
-                    height: 40,
-                    width: 40,
-                    child: Center(child: CircularProgressIndicator(color: appColors.blueDark,)));
+                return Center(
+                  child: Container(
+                      height: 40,
+                      width: 40,
+                      child: Center(child: CircularProgressIndicator(color: appColors.blueDark,))),
+                );
               } else if (snapshot.hasError) {
                 return Center(child: Text("Bir sorun oluştu",style:  TextStyle(color: appColors.blueDark),));
               }else{
@@ -91,13 +91,12 @@ class _ActiveAdvertsState extends ConsumerState<ActiveAdverts> {
         );
       }else{
         return Expanded(
-          child: Center(child: Text("Giriş yaptıktan sonra\nilan görüntüleyebilirsiniz")),
+          child: Center(child: Text("Giriş yaptıktan sonra\nilan görüntüleyebilirsiniz",textAlign: TextAlign.center,style: TextStyle(color: appColors.blueDark),)),
         );
       }
   }
 
   Widget getPostContainer(CombinedInfo data) {
-    print(data.userInfo);
     final appColors = AppColors();
 
     String name = ref.read(firebaseControllerRiverpod).getUser()?.name ?? "Kullanıcı";

@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:tedarikten/app/my_app.dart';
 import 'package:tedarikten/constants/app_colors.dart';
+import 'package:tedarikten/pages/profileInfoPage/profile_info_page.dart';
 import 'package:tedarikten/pages/sign_up_page.dart';
 import 'package:tedarikten/utils/firestore_helper.dart';
 
@@ -19,14 +20,21 @@ class LoginPage extends ConsumerStatefulWidget {
 
 
 class _LoginPageState extends ConsumerState<LoginPage> {
+
+  bool _passwordVisible = false;
+  @override
+  void initState() {
+    super.initState();
+    _passwordVisible = false;
+  }
   final _emailKey = GlobalKey<FormState>();
   final _passwordKey = GlobalKey<FormState>();
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
 
+  final appColors = AppColors();
   @override
   Widget build(BuildContext context) {
-    final appColors = AppColors();
     var size = MediaQuery.of(context).size;
     return SafeArea(
       child: Scaffold(
@@ -71,21 +79,28 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                               },
                               barrierDismissible: false, // Kullanıcının dışarı tıklamasını engeller
                             );
-                            await signInWithEmailAndPassword(context,ref);
+                            String response = await signInWithEmailAndPassword(context,ref);
                             Navigator.pop(context);
-                            final SharedPreferences prefs = await SharedPreferences.getInstance();
-                            final bool tempBool = prefs.getBool("showApp") ?? false;
-                            await prefs.setBool("showApp", true);
-                            final bool showApp = prefs.getBool("showApp") ?? false;
-                            print(tempBool);
-                            if (tempBool == false) {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(builder: (context) => MyAppBase(showApp: showApp)),
-                              );
-                            } else {
-                              Navigator.pop(context);
+                            print(response);
+                            if(response == "Ok"){
+                              final SharedPreferences prefs = await SharedPreferences.getInstance();
+                              final bool tempBool = prefs.getBool("showApp") ?? false;
+                              await prefs.setBool("showApp", true);
+                              final bool showApp = prefs.getBool("showApp") ?? false;
+                              if (tempBool == false) {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(builder: (context) => MyAppBase(showApp: showApp)),
+                                );
+                              } else {
+                                Navigator.pop(context);
+                                int index = ref.read(customNavBarRiverpod).currentIndex;
+                                ref.read(customNavBarRiverpod).setCurrentIndex(index == 4 ? 1 : 4);
+                              }
+                            }else{
+                              showLoginErrorDialog(context,"E-posta veya Şifre hatalı");
                             }
+
                           }else{
                             ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(
@@ -167,22 +182,27 @@ class _LoginPageState extends ConsumerState<LoginPage> {
               image: AssetImage(
                   "assets/logo/icon.png")),
         ),
-        Container(
-          width: 28,
-          height: 28,
-          padding: EdgeInsets.all(6),
-          decoration: BoxDecoration(
-            color: appColors.blueDark,
-            shape: BoxShape.circle,
+        GestureDetector(
+          onTap: () {
+            showQuesitonDialog();
+          },
+          child: Container(
+            width: 28,
+            height: 28,
+            padding: EdgeInsets.all(6),
+            decoration: BoxDecoration(
+              color: appColors.blueDark,
+              shape: BoxShape.circle,
 
-          ),
-          child: Image(
-            fit: BoxFit.fitHeight,
-            color: appColors.white,
-            image: AssetImage(
-                "assets/icons/question.png"
             ),
-          ),)
+            child: Image(
+              fit: BoxFit.fitHeight,
+              color: appColors.white,
+              image: AssetImage(
+                  "assets/icons/question.png"
+              ),
+            ),),
+        )
       ],
     );
   }
@@ -220,6 +240,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
             return passwordValidate(value);
           }
         },
+        obscureText: text == "Şifre" ? !_passwordVisible : false,
         decoration: InputDecoration(
             labelText: text,
             labelStyle: TextStyle(color: appColors.blueDark),
@@ -228,7 +249,19 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                 borderSide: BorderSide(
                     width: 1,
                     color: appColors.blueDark
-                )),
+                ),
+            ),
+            suffixIcon: text =="Şifre" ? IconButton(
+              onPressed: () {
+                setState(() {
+                  _passwordVisible = !_passwordVisible;
+                });
+              },
+              icon: Icon(_passwordVisible
+                  ? Icons.visibility
+                  : Icons.visibility_off,
+                  color: appColors.blueDark),
+            ) : null,
             border: OutlineInputBorder(
                 borderRadius: BorderRadius.all(Radius.circular(6)),
                 borderSide: BorderSide(
@@ -239,7 +272,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
 
   }
 
-  Future<void> signInWithEmailAndPassword(BuildContext context,WidgetRef ref) async {
+  Future<String> signInWithEmailAndPassword(BuildContext context,WidgetRef ref) async {
     try {
       await FirebaseAuth.instance.signInWithEmailAndPassword(
         email: emailController.text,
@@ -250,10 +283,10 @@ class _LoginPageState extends ConsumerState<LoginPage> {
       await FirestoreService().getUserInfo(user!.uid).then((value) {
         ref.read(firebaseControllerRiverpod).fetchUser(value!);
       });
-
+      return "Ok";
     } catch (e) {
       print('Giriş hatası: $e');
-      showLoginErrorDialog(context, e.toString());
+      return "Error";
     }
   }
 
@@ -274,6 +307,31 @@ class _LoginPageState extends ConsumerState<LoginPage> {
           ],
         );
       },
+    );
+  }
+
+  void showQuesitonDialog(){
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+          backgroundColor: appColors.blueDark,
+          duration: const Duration(seconds: 3),
+          elevation: 0,
+          behavior: SnackBarBehavior.floating,
+          content: const Center(
+            child: Text(
+              "Giriş yaparken sorun yaşarsanız internet bağlantınız kontrol edip tekrar deneyiniz.",
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 16,
+                fontFamily: 'FontNormal',
+                height: 1,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ),
+          shape: const RoundedRectangleBorder(
+              borderRadius: BorderRadius.all(Radius.circular(5)))
+      ),
     );
   }
 

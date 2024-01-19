@@ -1,3 +1,6 @@
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:tedarikten/models/user_info.dart';
+
 class NotificationInfo {
   String? id;
   String userId;
@@ -35,5 +38,20 @@ class NotificationInfo {
       'date': date,
       'isRead': isRead,
     };
+  }
+}
+
+class CombinedNotificationInfo {
+  late NotificationInfo notificationInfo;
+  late TUserInfo userInfo;
+
+  CombinedNotificationInfo({required this.notificationInfo, required this.userInfo});
+
+  factory CombinedNotificationInfo.fromFirestore(
+       Map<String, dynamic> notificationInfo,Map<String, dynamic> userInfo) {
+    return CombinedNotificationInfo(
+      notificationInfo: NotificationInfo.fromJson(notificationInfo),
+        userInfo: TUserInfo.fromJson(userInfo)
+    );
   }
 }

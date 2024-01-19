@@ -5,9 +5,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:tedarikten/constants/app_colors.dart';
 import 'package:tedarikten/models/user_info.dart';
+import 'package:tedarikten/pages/easyAccess/registered_supply_page.dart';
 import 'package:tedarikten/pages/homePage/active_adverts.dart';
 import 'package:tedarikten/pages/homePage/my_active_adverts.dart';
 import 'package:tedarikten/pages/login_page.dart';
+import 'package:tedarikten/pages/profileInfoPage/profile_info_page.dart';
 import 'package:tedarikten/pages/search_page.dart';
 import 'package:tedarikten/riverpod_management.dart';
 import 'package:tedarikten/ui/home_app_bar.dart';
@@ -28,6 +30,7 @@ class _MyHomePageState extends ConsumerState<HomePage> {
     final appColors = AppColors();
     var read = ref.read(homePageRiverpod);
     ref.watch(homePageRiverpod).searchModeActivate;
+    ref.watch(homePageRiverpod).setState;
     return SafeArea(
       child: Scaffold(
         backgroundColor: appColors.whiteDark,
@@ -68,7 +71,14 @@ class _MyHomePageState extends ConsumerState<HomePage> {
             const SizedBox(width: 10,),
             getContainerForEasyAccess(appColors.blue,const Color(0XFF8FA9B1),"Yakınında\n","Olan\nİlanları\nGörüntüle","assets/icons/location.png"),
             const SizedBox(width: 10,),
-            getContainerForEasyAccess(appColors.blueDark,const Color(0XFF16697A),"Kayıtlı\n","İlanları\nGörüntüle","assets/icons/bookmark.png"),
+            GestureDetector(
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => RegisteredSupplyPage()),
+                  );
+                },
+                child: getContainerForEasyAccess(appColors.blueDark,const Color(0XFF16697A),"Kayıtlı\n","İlanları\nGörüntüle","assets/icons/bookmark.png")),
           ],
         ),
       ),
@@ -110,8 +120,9 @@ class _MyHomePageState extends ConsumerState<HomePage> {
                 child: GestureDetector(
                   onTap: () async{
                     await FirebaseAuth.instance.signOut();
-                    //ref.read(customNavBarRiverpod).setCurrentIndex(0);
-
+                    Navigator.pop(context);
+                    int index = ref.read(customNavBarRiverpod).currentIndex;
+                    ref.read(customNavBarRiverpod).setCurrentIndex(index == 4 ? 1 : 4);
                     setState(() {
                     });
                   },
@@ -130,7 +141,7 @@ class _MyHomePageState extends ConsumerState<HomePage> {
               Text("FezaiTech"),
               Padding(
                 padding: const EdgeInsets.symmetric(vertical: 6),
-                child: Text("Version 0.0.0"),
+                child: Text("Version Test"),
               ),
             ],
           )
@@ -214,10 +225,14 @@ class _MyHomePageState extends ConsumerState<HomePage> {
           padding: const EdgeInsets.all(8.0),
           child: GestureDetector(
             onTap: () {
+              Navigator.pop(context);
               Navigator.push(
                 context,
                 MaterialPageRoute(builder: (context) => LoginPage()),
-              ).then((value) => setState((){}));
+              ).then((value) => setState((){
+              }));
+              ref.read(homePageRiverpod).setHomePage();
+              ref.read(customNavBarRiverpod).setCurrentIndex(0);
             },
             child: Container(
               height: 30,

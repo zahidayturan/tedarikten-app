@@ -12,7 +12,7 @@ import 'package:tedarikten/riverpod_management.dart';
 import 'package:tedarikten/utils/firestore_helper.dart';
 
 class ProfilePage extends ConsumerStatefulWidget {
-  late int mode;
+  late int mode; //0 ise kendi profili
   ProfilePage({Key? key,required this.mode}) : super(key: key);
   @override
   ConsumerState<ProfilePage> createState() => _ProfilePage();
@@ -27,9 +27,9 @@ class _ProfilePage extends ConsumerState<ProfilePage> {
   void initState(){
     super.initState();
     _pageViewController = PageController(initialPage: ref.read(profilePageRiverpod).switchCurrentIndex);
-    if(user != null){
+
       getUser();
-    }
+
   }
 
   void getUser() async {
@@ -56,6 +56,7 @@ class _ProfilePage extends ConsumerState<ProfilePage> {
         body: Column(
           children: [
             topWidget(user),
+
             Container(
               height: size.height-300,
               width: size.width,
@@ -70,14 +71,14 @@ class _ProfilePage extends ConsumerState<ProfilePage> {
                   children: [
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 10),
-                      child: MyPosts(mode: widget.mode,userId: userData!.id,),
+                      child: MyPosts(mode: widget.mode,userId: user != null ? userData!.id : "null",),
                     ),
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 10),
-                      child: MyActivePosts(mode: widget.mode,userId: userData!.id),
+                      child: MyActivePosts(mode: widget.mode,userId: user != null ? userData!.id : "null"),
                     )
                   ]),
-            ),
+            ) ,
           ],
         ),
       ),

@@ -1,35 +1,192 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:tedarikten/constants/app_colors.dart';
 import 'package:tedarikten/models/combined_info.dart';
-import 'package:tedarikten/models/supply_info.dart';
-import 'package:tedarikten/pages/supply_details_page.dart';
 import 'package:tedarikten/riverpod_management.dart';
 import 'package:tedarikten/utils/firestore_helper.dart';
 
+class RegisteredSupplyPage extends ConsumerStatefulWidget {
 
-class MyActivePosts extends ConsumerStatefulWidget {
-  late int mode;
-  late String userId;
-  MyActivePosts({Key? key,required this.mode, required this.userId}) : super(key: key);
-
+  RegisteredSupplyPage({Key? key}) : super(key: key);
   @override
-  ConsumerState<MyActivePosts> createState() => _MyActivePostsState();
+  ConsumerState<RegisteredSupplyPage> createState() => _RegisteredSupplyPage();
 }
 
-class _MyActivePostsState extends ConsumerState<MyActivePosts> {
+class _RegisteredSupplyPage extends ConsumerState<RegisteredSupplyPage> {
+
   User? user = FirebaseAuth.instance.currentUser;
+  FirestoreService firestoreService = FirestoreService();
+  final appColors = AppColors();
   @override
-  void initState() {
-    super.initState();
-  }
 
 
 
   Widget build(BuildContext context) {
+    User? user = FirebaseAuth.instance.currentUser;
+    var read = ref.read(profilePageRiverpod);
+    var size = MediaQuery.of(context).size;
+    return SafeArea(
+      child: Scaffold(
+        body: Column(
+          children: [
+            topWidget(),
+            user != null ? Container(
+              height: size.height-300,
+              width: size.width,
+              padding: EdgeInsets.all(10),
+              child: getItems(),
+            ) : Center(child: Padding(
+              padding: const EdgeInsets.only(top: 40),
+              child: Text("Henüz giriş yapmadınız"),
+            )),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget topWidget(){
+    final appColors = AppColors();
+    return Container(
+      height: 200,
+      child: Stack(
+        children: [
+          Container(
+            height: 200,
+            decoration: BoxDecoration(
+                color: appColors.blue
+            ),
+          ),
+          pageInfo(),
+
+        ],
+      ),);
+  }
+  Widget pageTopController(){
+    final appColors = AppColors();
+    var readNavBar = ref.read(customNavBarRiverpod);
+    return Row(
+      children: [
+        GestureDetector(
+          onTap: () {
+            Navigator.pop(context);
+            readNavBar.setCurrentIndex(0);
+          },
+          child: Container(
+            width: 36,
+            height: 36,
+            decoration: BoxDecoration(
+                color: appColors.blueDark,
+                borderRadius: BorderRadius.all(Radius.circular(5))
+            ),
+            child: Image(
+              color: appColors.white,
+              image: AssetImage(
+                  "assets/icons/arrow.png"
+              ),
+            ),
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 10),
+          child: Text("Kayıtlı İşlemler",style: TextStyle(color: appColors.white,fontSize: 18,fontFamily: "FontNormal"),),
+        ),
+        Spacer(),
+        Container(
+          width: 30,
+          height: 30,
+          padding: EdgeInsets.all(4),
+          child: Image(
+            color: appColors.white,
+            image: AssetImage(
+                "assets/icons/question.png"
+            ),
+          ),)
+      ],
+    );
+  }
+  Widget pageInfo(){
+    return Stack(
+      children: [
+        Container(
+          height: 200,
+          decoration: BoxDecoration(
+              color: appColors.blue
+          ),
+        ),
+        Positioned(
+          right: 10,
+          top: -20,
+          child: SizedBox(
+            width: 150,
+            height: 150,
+            child: Image(
+              color: appColors.blueDark.withOpacity(0.8),
+              image: AssetImage(
+                  "assets/icons/bookmark.png"
+              ),
+            ),
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.all(10.0),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              pageTopController(),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.only(left: 36),
+                    child: getItemCount()
+                  ),
+                ],
+              ),
+              SizedBox()
+            ],
+          ),
+        ),
+
+      ],
+    );
+  }
+
+  Widget getText(String textNormal, String textBold,double fontSize, Color color){
+    return RichText(
+      textAlign: TextAlign.start,
+      text: TextSpan(
+        children: <TextSpan>[
+          TextSpan(text: textBold,style: TextStyle(fontFamily: "FontBold",fontSize: fontSize,color: color)),
+          TextSpan(text: textNormal, style: TextStyle(fontFamily: "FontNormal",fontSize: fontSize,color: color)),
+        ],
+      ),
+    );
+  }
+  
+  Widget getItemCount(){
+    return user != null ? FutureBuilder<String>(
+      future: FirestoreService().getRegisteredCountFromFirestore(user!.uid),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return CircularProgressIndicator();
+        } else if (snapshot.hasError) {
+          return const Text('?');
+        } else {
+          String registeredCount = snapshot.data ?? "0";
+          return registeredCount != "0" ? Center(
+            child:getText("Kayıtlı İlanınız\nBulunmakta","$registeredCount Adet\n", 18, appColors.white),
+          ) : Center(
+            child:getText("Bulunmamakta","Kayıtlı İlanınız\n", 18, appColors.white),
+          ) ;
+        }
+      },
+    ) : getLineText("Henüz giriş yapmadınız", 15, "FontBold", appColors.white, TextAlign.start);
+  }
+
+  Widget getItems() {
     final appColors = AppColors();
     if(user == null ){
       return Center(
@@ -37,7 +194,7 @@ class _MyActivePostsState extends ConsumerState<MyActivePosts> {
           textAlign: TextAlign.center,
           text: TextSpan(
             children: <TextSpan>[
-              TextSpan(text: widget.mode == 0 ? 'Paylaşımlarınızı görmek için\n' : 'Paylaşımları görmek için\n', style: TextStyle(fontFamily: "FontNormal",color: appColors.black,fontSize: 15)),
+              TextSpan(text: 'Kaydettiğiniz ilanları görmek için\n', style: TextStyle(fontFamily: "FontNormal",color: appColors.black,fontSize: 15)),
               TextSpan(text: 'giriş yapmalısınız',style: TextStyle(fontFamily: "FontBold",color: appColors.blueDark,fontSize: 15)),
             ],
           ),
@@ -45,7 +202,7 @@ class _MyActivePostsState extends ConsumerState<MyActivePosts> {
       );
     }else{
       return FutureBuilder<List<CombinedInfo>>(
-        future: FirestoreService().getActiveSupplyDataFromFirestore(widget.userId),
+        future: FirestoreService().getRegisteredSupplyDataFromFirestore(user!.uid),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return Container(
@@ -68,7 +225,7 @@ class _MyActivePostsState extends ConsumerState<MyActivePosts> {
                     ),
                     children: <TextSpan>[
                       TextSpan(text: 'Henüz', style: TextStyle(fontFamily: "FontNormal")),
-                      TextSpan(text: widget.mode == 0 ? ' aktif ilanınız ' : ' aktif ilanı ',style: TextStyle(fontFamily: "FontBold")),
+                      TextSpan(text: ' kayıtlı ilanınız ',style: TextStyle(fontFamily: "FontBold")),
                       TextSpan(text: 'yok',style: TextStyle(fontFamily: "FontNormal")),
                     ],
                   ),
@@ -91,23 +248,13 @@ class _MyActivePostsState extends ConsumerState<MyActivePosts> {
   Widget getPostContainer(CombinedInfo data) {
     final appColors = AppColors();
 
-    String name = data.userInfo.name ?? "Kullanıcı";
-
     String dataStatus = data.supplyInfo.status != "" ? "${data.supplyInfo.status.split(" ")[0]}\n${data.supplyInfo.status.split(" ")[1]}" : "Tedarik\nPaylaşımı";
 
-    DateTime sharingDateTime = data.supplyInfo.sharingDate != "" ? DateTime.parse(data.supplyInfo.sharingDate) : DateTime.now();
-    String sharingDate = DateFormat('dd.MM.yyyy').format(sharingDateTime);
-    String sharingTime = DateFormat('HH:mm').format(sharingDateTime);
 
     DateTime firstDateTime = data.supplyInfo.dateFirst != "" ? DateTime.parse(data.supplyInfo.dateFirst) : DateTime.now();
     String firstDate = DateFormat('dd.MM.yyyy HH:mm').format(firstDateTime);
-
-
-
     DateTime lastDateTime = data.supplyInfo.dateLast != "" ? DateTime.parse(data.supplyInfo.dateLast) : DateTime.now();
     String lastDate = DateFormat('dd.MM.yyyy HH:mm').format(lastDateTime);
-
-
 
     String getCompleteStatus(){
       if(data.supplyInfo.dateLast != "" && data.supplyInfo.dateFirst != ""){
@@ -149,17 +296,13 @@ class _MyActivePostsState extends ConsumerState<MyActivePosts> {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  getText(data.supplyInfo.type, 17, "FontBold", appColors.black,TextAlign.start),
-                  getText("${data.userInfo.name} ${data.userInfo.surname}", 14, "FontNormal", appColors.blackLight,TextAlign.start)
+                  getLineText(data.supplyInfo.type, 17, "FontBold", appColors.black,TextAlign.start),
+                  getLineText("${data.userInfo.name} ${data.userInfo.surname}", 14, "FontNormal", appColors.blackLight,TextAlign.start)
                 ],
               ),
               GestureDetector(
                 onTapDown: (TapDownDetails details) async {
-                  if(widget.mode == 0){
-                    await _showPopupMenu(details.globalPosition,data.supplyInfo.id!,user!.uid,data.userInfo.id);
-                  }else if(widget.mode == 1){
-                    await _showPopupMenuOtherUser(details.globalPosition);
-                  }
+                  await _showPopupMenuOtherUser(details.globalPosition,user!.uid,data.supplyInfo.id!);
                 },
                 child: Container(height: 16,width: 36,
                   padding: EdgeInsets.symmetric(horizontal: 6),
@@ -174,12 +317,12 @@ class _MyActivePostsState extends ConsumerState<MyActivePosts> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              getText(data.supplyInfo.name, 13, "FontNormal", appColors.black,TextAlign.start),
+              getLineText(data.supplyInfo.name, 13, "FontNormal", appColors.black,TextAlign.start),
               Padding(
                 padding: const EdgeInsets.symmetric(vertical: 6),
                 child: Row(
                   children: [
-                    getText(dataStatus, 13, "FontNormal", appColors.black,TextAlign.right),
+                    getLineText(dataStatus, 13, "FontNormal", appColors.black,TextAlign.right),
                     Container(
                       margin: EdgeInsets.only(left: 4),
                       height: 40,
@@ -211,8 +354,8 @@ class _MyActivePostsState extends ConsumerState<MyActivePosts> {
                         children: [
                           SizedBox(
                               width: 56,
-                              child: getText("İlan\nTarihi", 12, "FontBold", appColors.blackLight, TextAlign.start)),
-                          getText(firstDate, 12, "FontNormal", appColors.black, TextAlign.start),
+                              child: getLineText("İlan\nTarihi", 12, "FontBold", appColors.blackLight, TextAlign.start)),
+                          getLineText(firstDate, 12, "FontNormal", appColors.black, TextAlign.start),
                         ],
                       ),
                       Padding(
@@ -222,8 +365,8 @@ class _MyActivePostsState extends ConsumerState<MyActivePosts> {
                           children: [
                             SizedBox(
                                 width: 56,
-                                child: getText("İlan Son\nTarihi", 12, "FontBold", appColors.blackLight, TextAlign.start)),
-                            getText(lastDate, 12, "FontNormal", appColors.black, TextAlign.start),
+                                child: getLineText("İlan Son\nTarihi", 12, "FontBold", appColors.blackLight, TextAlign.start)),
+                            getLineText(lastDate, 12, "FontNormal", appColors.black, TextAlign.start),
                           ],
                         ),
                       ),
@@ -234,34 +377,21 @@ class _MyActivePostsState extends ConsumerState<MyActivePosts> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
-                      getText(getCompleteStatus(), 13, "FontNormal", appColors.blueDark,TextAlign.right),
-                      GestureDetector(
-                        onTap: () {
-                          int mode= 0;
-                          if(user!.uid == data.supplyInfo.userId){
-                            mode = 1;
-                          }
-                          ref.read(profilePageRiverpod).setSupplyDetailsId(data);
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(builder: (context) => SupplyDetailsPage(mode: mode,)),
-                          );
-                        },
-                        child: Container(
-                          height: 20,
-                          decoration: BoxDecoration(
-                              color: appColors.blueDark,
-                              borderRadius: BorderRadius.all(Radius.circular(5))
-                          ),
-                          child: Center(
-                            child: Padding(
-                              padding: const EdgeInsets.symmetric(horizontal: 4),
-                              child: Row(
-                                children: [
-                                  getText("Detayları görüntüle", 12, "FontNormal", appColors.white, TextAlign.center),
-                                  Icon(Icons.arrow_forward_ios_rounded,color: appColors.white,size: 11,)
-                                ],
-                              ),
+                      getLineText(getCompleteStatus(), 13, "FontNormal", appColors.blueDark,TextAlign.right),
+                      Container(
+                        height: 20,
+                        decoration: BoxDecoration(
+                            color: appColors.blueDark,
+                            borderRadius: BorderRadius.all(Radius.circular(5))
+                        ),
+                        child: Center(
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 4),
+                            child: Row(
+                              children: [
+                                getLineText("Detayları görüntüle", 12, "FontNormal", appColors.white, TextAlign.center),
+                                Icon(Icons.arrow_forward_ios_rounded,color: appColors.white,size: 11,)
+                              ],
                             ),
                           ),
                         ),
@@ -277,7 +407,7 @@ class _MyActivePostsState extends ConsumerState<MyActivePosts> {
     );
   }
 
-  Widget getText(String text, double size, String family, Color textColor, TextAlign align){
+  Widget getLineText(String text, double size, String family, Color textColor, TextAlign align){
     return Text(text,
       textAlign: align,
       overflow: TextOverflow.ellipsis,
@@ -289,7 +419,7 @@ class _MyActivePostsState extends ConsumerState<MyActivePosts> {
       ),);
   }
 
-  _showPopupMenu(Offset offset,String documentId,String currentUserId,String otherUserId) async {
+  _showPopupMenuOtherUser(Offset offset,String userId, String supplyId) async {
     double left = offset.dx;
     double top = offset.dy;
     await showMenu(
@@ -297,9 +427,8 @@ class _MyActivePostsState extends ConsumerState<MyActivePosts> {
       position: RelativeRect.fromLTRB(left, top+12, 12, 0),
       items: [
         PopupMenuItem<String>(
-          child: const Text('Sil'), value: 'Sil',onTap: () async{
-          String message = await FirestoreService().deleteSupply(documentId,currentUserId,otherUserId);
-          print(message);
+          child: const Text('Kayıtlı İlanlardan Çıkar'), value: 'Çıkar',onTap: () async{
+          await FirestoreService().updateSave(userId,supplyId);
           setState(() {
 
           });
@@ -309,21 +438,8 @@ class _MyActivePostsState extends ConsumerState<MyActivePosts> {
     );
   }
 
-  _showPopupMenuOtherUser(Offset offset) async {
-    double left = offset.dx;
-    double top = offset.dy;
-    await showMenu(
-      context: context,
-      position: RelativeRect.fromLTRB(left, top+12, 12, 0),
-      items: [
-        PopupMenuItem<String>(
-          child: const Text('Bildir'), value: 'Bildir',onTap: () async{
-          setState(() {
 
-          });
-        },),
-      ],
-      elevation: 8.0,
-    );
-  }
+
+
 }
+

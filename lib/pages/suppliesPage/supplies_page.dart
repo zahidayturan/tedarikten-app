@@ -18,6 +18,7 @@ class _SuppliesPage extends ConsumerState<SuppliesPage> {
   late PageController _pageViewController;
   User? user = FirebaseAuth.instance.currentUser;
   FirestoreService firestoreService = FirestoreService();
+  final appColors = AppColors();
   @override
   void initState(){
     super.initState();
@@ -25,16 +26,11 @@ class _SuppliesPage extends ConsumerState<SuppliesPage> {
   }
 
 
-
-
   Widget build(BuildContext context) {
     User? user = FirebaseAuth.instance.currentUser;
     var read = ref.read(suppliesPageRiverpod);
     int switchIndex = read.switchCurrentIndex;
     var size = MediaQuery.of(context).size;
-    if(user != null){
-
-    }
     return SafeArea(
       child: Scaffold(
         body: Column(
@@ -70,6 +66,8 @@ class _SuppliesPage extends ConsumerState<SuppliesPage> {
   }
 
   Widget topWidget(User? user){
+    var read = ref.read(suppliesPageRiverpod);
+    int switchIndex = read.switchCurrentIndex;
     final appColors = AppColors();
     return Container(
       height: 230,
@@ -104,9 +102,14 @@ class _SuppliesPage extends ConsumerState<SuppliesPage> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
+                    user != null ?
                     Padding(
                       padding: const EdgeInsets.only(left: 36),
-                      child: getText("Bekleyen\nBaşvurunuz\nBulunmakta","0 Adet\n", 18, appColors.white),
+                      child: switchIndex == 0 ? getItemCountForMy() : getItemCountForOther(),
+                    ) :
+                    Padding(
+                      padding: const EdgeInsets.only(left: 36),
+                      child: Text("Henüz\ngiriş\nyapmadınız",style: TextStyle(color: appColors.white),),
                     ),
                   ],
                 ),
@@ -117,6 +120,7 @@ class _SuppliesPage extends ConsumerState<SuppliesPage> {
         ],
       ),);
   }
+
   Widget getText(String textNormal, String textBold,double fontSize, Color color){
     return RichText(
       textAlign: TextAlign.start,
@@ -191,96 +195,7 @@ class _SuppliesPage extends ConsumerState<SuppliesPage> {
           )
         ],
       );
-    }/*
-    else if(userData == null){
-      return Center(
-        child: RichText(
-          textAlign: TextAlign.center,
-          text: TextSpan(
-            style: TextStyle(
-                fontSize: 15,
-                height: 1,
-                color: appColors.white
-            ),
-            children: <TextSpan>[
-              TextSpan(text: 'Profil bilgileri', style: TextStyle(fontFamily: "FontNormal")),
-              TextSpan(text: ' yükleniyor ',style: TextStyle(fontFamily: "FontBold")),
-            ],
-          ),
-        ),
-      );
     }
-    else if(user != null){
-      return SizedBox(
-        height: 96,
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            Container(
-              width: 96,
-              height: 96,
-              decoration: BoxDecoration(
-                  color: appColors.white,
-                  shape: BoxShape.circle
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 8),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text("${userData!.name} ${userData!.surname}",style: TextStyle(color: appColors.white,fontFamily: "FontBold",fontSize: 16),),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 2),
-                    child: Text(userData!.profession,style: TextStyle(color: appColors.white,fontSize: 15),),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 2),
-                    child: Text("${userData!.city} / ${userData!.country}",style: TextStyle(color: appColors.white,fontSize: 14),),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.only(top: 6),
-                    child: GestureDetector(
-                      onTap: () async{
-                      },
-                      child: getUserPanelButton("Profili Düzenle"),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            Spacer(),
-            Column(
-              mainAxisAlignment: MainAxisAlignment.end,
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 8),
-                  child: GestureDetector(
-                    onTap: () async{
-                    },
-                    child: getUserPanelButton("${userData!.followList?.length} Takip"),
-                  ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 8),
-                  child: GestureDetector(
-                    onTap: () async{
-                    },
-                    child: getUserPanelButton("${userData!.followerList?.length} Takipçi"),
-                  ),
-                ),
-                GestureDetector(
-                  onTap: () async{
-                  },
-                  child: getUserPanelButton("${userData!.advertList?.length} İlan"),
-                ),
-              ],)
-          ],
-        ),
-      );
-    }*/
     else{
       return Center(child: Text("Bir sorun oluştu",style:  TextStyle(color: appColors.white),));
     }
@@ -302,7 +217,6 @@ class _SuppliesPage extends ConsumerState<SuppliesPage> {
     var read = ref.read(suppliesPageRiverpod);
     int switchIndex = read.switchCurrentIndex;
     var size = MediaQuery.of(context).size;
-    final appColors = AppColors();
     return Container(
         width: size.width-72,
         height: 40,
@@ -358,6 +272,46 @@ class _SuppliesPage extends ConsumerState<SuppliesPage> {
             ],
           ),
         )
+    );
+  }
+
+  Widget getItemCountForMy(){
+    return FutureBuilder<String>(
+      future: FirestoreService().getApplyActiveCountFromFirestore(user!.uid),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return CircularProgressIndicator(color: appColors.orange,);
+        } else if (snapshot.hasError) {
+          return const Text('?');
+        } else {
+          String count = snapshot.data ?? "0";
+          return Center(
+            child: count != "0" ?
+            getText("Bekleyen\nBaşvurunuz\nBulunmakta","$count Adet\n", 18, appColors.white)
+            : getText("Bulunmamakta","Bekleyen\nBaşvurunuz\n", 18, appColors.white),
+          );
+        }
+      },
+    );
+  }
+
+  Widget getItemCountForOther(){
+    return FutureBuilder<String>(
+      future: FirestoreService().getOtherApplyActiveCountFromFirestore(user!.uid),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return CircularProgressIndicator(color: appColors.orange,);
+        } else if (snapshot.hasError) {
+          return const Text('?');
+        } else {
+          String count = snapshot.data ?? "0";
+          return Center(
+            child:count != "0" ?
+            getText("Tarafınıza Gelen\nBaşvuru\nBulunmakta","$count Adet\n", 18, appColors.white)
+            : getText("Gelen\nBaşvuru\n","Bulunmamakta", 18, appColors.white)
+          );
+        }
+      },
     );
   }
 }
