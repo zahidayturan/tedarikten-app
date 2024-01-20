@@ -5,7 +5,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:tedarikten/constants/app_colors.dart';
 import 'package:tedarikten/models/user_info.dart';
+import 'package:tedarikten/pages/easyAccess/last_hours_page.dart';
 import 'package:tedarikten/pages/easyAccess/registered_supply_page.dart';
+import 'package:tedarikten/pages/easyAccess/urgent_supply_page.dart';
 import 'package:tedarikten/pages/homePage/active_adverts.dart';
 import 'package:tedarikten/pages/homePage/my_active_adverts.dart';
 import 'package:tedarikten/pages/login_page.dart';
@@ -65,9 +67,21 @@ class _MyHomePageState extends ConsumerState<HomePage> {
         scrollDirection: Axis.horizontal,
         child: Row(
           children: [
-            getContainerForEasyAccess(appColors.pink,const Color(0XFFB82F43),"Acil\n","Olan\nİlanları\nGörüntüle","assets/icons/sandWatch.png"),
+            GestureDetector(onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => UrgentSupplyPage()),
+              );
+            },child: getContainerForEasyAccess(appColors.pink,const Color(0XFFB82F43),"Acil\n","Olan\nİlanları\nGörüntüle","assets/icons/sandWatch.png")),
             const SizedBox(width: 10,),
-            getContainerForEasyAccess(appColors.orange,const Color(0XFFF99000),"Son\n48 Saat\n","İlanlarını\nGörüntüle","assets/icons/clock.png"),
+            GestureDetector(
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => LastHoursSupplyPage()),
+                  );
+                },
+                child: getContainerForEasyAccess(appColors.orange,const Color(0XFFF99000),"Son\n48 Saat\n","İlanlarını\nGörüntüle","assets/icons/clock.png")),
             const SizedBox(width: 10,),
             getContainerForEasyAccess(appColors.blue,const Color(0XFF8FA9B1),"Yakınında\n","Olan\nİlanları\nGörüntüle","assets/icons/location.png"),
             const SizedBox(width: 10,),
