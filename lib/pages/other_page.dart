@@ -37,12 +37,26 @@ class _OtherPage extends ConsumerState<OtherPage> {
             Container(
               height: size.height-300,
               width: size.width,
-              child: Center(
-                child: Text("Tedarikten\nkulandığınız için\nteşekkür ederiz",style: TextStyle(
-                  color: appColors.blueDark,
-                  fontSize: 18,
-                  fontFamily: "FontNormal"
-                ),textAlign: TextAlign.center,),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: [
+                  Center(
+                    child: Text("Tedarikten\nkulandığınız için\nteşekkür ederiz",style: TextStyle(
+                      color: appColors.blueDark,
+                      fontSize: 18,
+                      fontFamily: "FontNormal"
+                    ),textAlign: TextAlign.center,),
+                  ),
+                  Container(
+                    width: 120,
+                    child: Image(
+                      //color: appColors.orange,
+                      image: AssetImage(
+                          "assets/logo/splash.png"
+                      ),
+                    ),
+                  ),
+                ],
               )
             ),
           ],
@@ -69,6 +83,16 @@ class _OtherPage extends ConsumerState<OtherPage> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 pageTopController(),
+            Container(
+              width: 200,
+              child: Image(
+                //color: appColors.orange,
+                image: AssetImage(
+                    "assets/logo/logo_text.png"
+                ),
+              ),
+            ),
+                SizedBox(height: 50,)
               ],
             ),
           ),
@@ -105,17 +129,47 @@ class _OtherPage extends ConsumerState<OtherPage> {
           child: Text("",style: TextStyle(color: appColors.white,fontSize: 18,fontFamily: "FontNormal"),),
         ),
         Spacer(),
-        Container(
-          width: 30,
-          height: 30,
-          padding: EdgeInsets.all(4),
-          child: Image(
-            color: appColors.white,
-            image: AssetImage(
-                "assets/icons/question.png"
-            ),
-          ),)
+        GestureDetector(
+          onTap: () {
+            showQuesitonDialog();
+          },
+          child: Container(
+            width: 30,
+            height: 30,
+            padding: EdgeInsets.all(4),
+            child: Image(
+              color: appColors.white,
+              image: AssetImage(
+                  "assets/icons/question.png"
+              ),
+            ),),
+        )
       ],
+    );
+  }
+
+  void showQuesitonDialog(){
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+          backgroundColor: appColors.blueDark,
+          duration: const Duration(seconds: 3),
+          elevation: 0,
+          behavior: SnackBarBehavior.floating,
+          content: const Center(
+            child: Text(
+              "FezaiTech",
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 16,
+                fontFamily: 'FontNormal',
+                height: 1,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ),
+          shape: const RoundedRectangleBorder(
+              borderRadius: BorderRadius.all(Radius.circular(5)))
+      ),
     );
   }
 
