@@ -132,14 +132,6 @@ class _MyActiveAdvertsState extends ConsumerState<MyActiveAdverts> {
       padding: EdgeInsets.all(8.0),
       decoration: BoxDecoration(
         color: appColors.greenLight,
-        boxShadow: [
-          BoxShadow(
-              color: appColors.blackLight.withOpacity(0.2),
-              spreadRadius: 0.4,
-              blurRadius: 2,
-              offset: const Offset(0, 2)
-          )
-        ],
         borderRadius: BorderRadius.all(Radius.circular(5)),
       ),
       child: Column(

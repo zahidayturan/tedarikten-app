@@ -30,8 +30,13 @@ class ProfilePageRiverpod extends ChangeNotifier {
 
   String? type;
   String? description;
+  String? name;
   void setType(String text) {
     type = text ;
+    notifyListeners();
+  }
+  void setName(String text) {
+    name = text ;
     notifyListeners();
   }
   void setDescription(String text) {
@@ -41,6 +46,7 @@ class ProfilePageRiverpod extends ChangeNotifier {
   void clear(){
     type = null;
     description = null;
+    name = null;
     notifyListeners();
   }
 
