@@ -7,6 +7,7 @@ import 'package:intl/intl.dart';
 import 'package:tedarikten/constants/app_colors.dart';
 import 'package:tedarikten/models/application_supply_info.dart';
 import 'package:tedarikten/models/combined_info.dart';
+import 'package:tedarikten/models/supply_info.dart';
 import 'package:tedarikten/pages/profileInfoPage/profile_info_page.dart';
 import 'package:tedarikten/riverpod_management.dart';
 import 'package:tedarikten/utils/firestore_helper.dart';
@@ -60,6 +61,7 @@ class _SupplyDetailsPageState extends ConsumerState<SupplyDetailsPage> {
     );
   }
   Widget controlButtons(){
+    var read = ref.read(profilePageRiverpod);
     return Padding(
       padding: const EdgeInsets.all(8.0),
       child: Row(
@@ -600,6 +602,14 @@ class _SupplyDetailsPageState extends ConsumerState<SupplyDetailsPage> {
           ),
           Padding(
             padding: const EdgeInsets.only(left: 8,bottom: 4),
+            child: getText("Tedarik Adı", 16, appColors.black, "FontBold", TextAlign.start),
+          ),
+          Padding(
+            padding: const EdgeInsets.only(left: 16,bottom: 6),
+            child: getText(data.supplyInfo.name, 15, appColors.black, "FontNormal", TextAlign.start),
+          ),
+          Padding(
+            padding: const EdgeInsets.only(left: 8,bottom: 4),
             child: getText("Tedarik Açıklaması", 16, appColors.black, "FontBold", TextAlign.start),
           ),
           Padding(
@@ -801,9 +811,14 @@ class _SupplyDetailsPageState extends ConsumerState<SupplyDetailsPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Center(
-            child: Padding(
-              padding: const EdgeInsets.only(bottom: 12),
+          Container(
+            margin: const EdgeInsets.only(bottom: 12),
+            padding: EdgeInsets.symmetric(vertical: 6),
+            decoration: BoxDecoration(
+              color: appColors.greenLight,
+              borderRadius: BorderRadius.all(Radius.circular(10))
+            ),
+            child: Center(
               child: getText("Düzenlemek istediğiniz bilginin\nüstüne dokunun", 16, appColors.blackLight, "FontNormal", TextAlign.center),
             ),
           ),
@@ -839,6 +854,37 @@ class _SupplyDetailsPageState extends ConsumerState<SupplyDetailsPage> {
               Visibility(
                   visible: read.type != null,
                   child: getText("Düzenlendi", 14, appColors.blueDark, "FontNormal", TextAlign.end))
+            ],
+          ),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              GestureDetector(
+                onTap: () async{
+                  String? newValue = await _showNameInputDialogForTextField(context,"Tedarik Adı",data.supplyInfo.name,108);
+                  setState(() {
+                    read.setName(newValue!);
+                  });
+                },
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.only(left: 8,bottom: 4),
+                      child: getText("Tedarik Adı", 16, appColors.black, "FontBold", TextAlign.start),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.only(left: 16,bottom: 6),
+                      child: getText(data.supplyInfo.name, 15, appColors.black, "FontNormal", TextAlign.start),
+                    ),
+                  ],
+                ),
+              ),
+              Visibility(
+                  visible: read.name != null,
+                  child: getText("Düzenlendi", 14, appColors.blueDark, "FontNormal", TextAlign.end))
+
             ],
           ),
           Row(
@@ -1061,189 +1107,230 @@ class _SupplyDetailsPageState extends ConsumerState<SupplyDetailsPage> {
   }
 
   Widget editingModeButtons(){
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 24,vertical: 12),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        crossAxisAlignment: CrossAxisAlignment.end,
-        children: [
-          GestureDetector(
-              onTap: () {
-                ref.read(profilePageRiverpod).clear();
-                setState(() {
+    var read = ref.read(profilePageRiverpod);
+    CombinedInfo data = ref.read(profilePageRiverpod).combinedInfo;
+    return Visibility(
+      visible: read.name != null || read.type != null || read.description != null,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 24,vertical: 12),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          crossAxisAlignment: CrossAxisAlignment.end,
+          children: [
+            GestureDetector(
+                onTap: () {
+                  ref.read(profilePageRiverpod).clear();
+                  setState(() {
 
-                });
-              },
-              child: getPanelButton("Eski Haline Dön",16,"FontNormal",appColors.blue,appColors.white)),
-          GestureDetector(
-              onTap: () {
-                showDialog(
-                  context: context,
-                  builder: (BuildContext context) {
-                    return Center(
-                      child: Container(
-                        width: 200,
-                        height: 200,
-                        decoration: BoxDecoration(
-                            color: appColors.whiteDark,
-                            borderRadius: BorderRadius.all(Radius.circular(10))
-                        ),
-                        child: PageView(
-                          controller: _pageControllerForDialog,
-                          physics: NeverScrollableScrollPhysics(),
-                          children: [
-                            Column(
-                              mainAxisAlignment: MainAxisAlignment.spaceAround,
-                              crossAxisAlignment: CrossAxisAlignment.center,
-                              children: [
-                                Icon(Icons.save_alt_rounded,color: appColors.blueDark,size: 64,),
-                                Text("Değişiklikler\nkaydedilsin mi?",style: TextStyle(
-                                    color: appColors.black,
-                                    fontSize: 16,
-                                    height: 1,
-                                    fontFamily: "FontNormal",
-                                    decoration: TextDecoration.none
-                                ),textAlign: TextAlign.center,
-                                ),
-                                Row(
-                                  mainAxisAlignment: MainAxisAlignment.spaceAround,
-                                  children: [
-                                    GestureDetector(
-                                      onTap: () {
-                                        Navigator.pop(context);
-                                      },
-                                      child: Container(
-                                        decoration: BoxDecoration(
-                                            color: appColors.blueDark,
-                                            borderRadius: BorderRadius.all(Radius.circular(5))
-                                        ),
-                                        child: Padding(
-                                          padding: const EdgeInsets.symmetric(horizontal: 8,vertical: 4),
-                                          child: Text("Geri dön",style: TextStyle(
-                                              color: appColors.white,
-                                              fontSize: 14,
-                                              fontFamily: "FontNormal",
-                                              decoration: TextDecoration.none
-                                          ),),
+                  });
+                },
+                child: getPanelButton("Geri Al",16,"FontNormal",appColors.blue,appColors.white)),
+            GestureDetector(
+                onTap: () {
+                  showDialog(
+                    context: context,
+                    builder: (BuildContext context) {
+                      return Center(
+                        child: Container(
+                          width: 200,
+                          height: 200,
+                          decoration: BoxDecoration(
+                              color: appColors.whiteDark,
+                              borderRadius: BorderRadius.all(Radius.circular(10))
+                          ),
+                          child: PageView(
+                            controller: _pageControllerForDialog,
+                            physics: NeverScrollableScrollPhysics(),
+                            children: [
+                              Column(
+                                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                                crossAxisAlignment: CrossAxisAlignment.center,
+                                children: [
+                                  Icon(Icons.save_alt_rounded,color: appColors.blueDark,size: 64,),
+                                  Text("Değişiklikler\nkaydedilsin mi?",style: TextStyle(
+                                      color: appColors.black,
+                                      fontSize: 16,
+                                      height: 1,
+                                      fontFamily: "FontNormal",
+                                      decoration: TextDecoration.none
+                                  ),textAlign: TextAlign.center,
+                                  ),
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.spaceAround,
+                                    children: [
+                                      GestureDetector(
+                                        onTap: () {
+                                          Navigator.pop(context);
+                                        },
+                                        child: Container(
+                                          decoration: BoxDecoration(
+                                              color: appColors.blueDark,
+                                              borderRadius: BorderRadius.all(Radius.circular(5))
+                                          ),
+                                          child: Padding(
+                                            padding: const EdgeInsets.symmetric(horizontal: 8,vertical: 4),
+                                            child: Text("Geri dön",style: TextStyle(
+                                                color: appColors.white,
+                                                fontSize: 14,
+                                                fontFamily: "FontNormal",
+                                                decoration: TextDecoration.none
+                                            ),),
+                                          ),
                                         ),
                                       ),
-                                    ),
-                                    GestureDetector(
-                                      onTap: () async{
-                                        _pageControllerForDialog.nextPage(duration: Duration(milliseconds: 300), curve: Curves.bounceInOut);
-
-                                        /*String status = await FirestoreService().advertApply(ApplicationSupplyInfo(applicantUserId: user!.uid, supplyId: userData.supplyInfo.id!, message: "title", date: DateTime.now().toString(), response: "Yanıt Bekleniyor"));
-                                        if(status == "Ok"){
+                                      GestureDetector(
+                                        onTap: () async{
                                           _pageControllerForDialog.nextPage(duration: Duration(milliseconds: 300), curve: Curves.bounceInOut);
-                                        }else{
-                                          _pageControllerForDialog.jumpToPage(3);
-                                        }*/
-                                      },
-                                      child: Container(
-                                        decoration: BoxDecoration(
-                                            color: appColors.blueDark,
-                                            borderRadius: BorderRadius.all(Radius.circular(5))
-                                        ),
-                                        child: Padding(
-                                          padding: const EdgeInsets.symmetric(horizontal: 8,vertical: 4),
-                                          child: Text("Evet",style: TextStyle(
-                                              color: appColors.white,
-                                              fontSize: 14,
-                                              fontFamily: "FontNormal",
-                                              decoration: TextDecoration.none
-                                          ),),
+                                          String newDescription = data.supplyInfo.description;
+                                          if(read.description != null){
+                                          newDescription = read.description!;
+                                          }
+                                          String newType = data.supplyInfo.type;
+                                          if(read.type != null){
+                                            newType = read.description!;
+                                          }
+                                          String newName = data.supplyInfo.name;
+                                          if(read.name != null){
+                                            newName = read.name!;
+                                          }
+
+                                          SupplyInfo newData = SupplyInfo(
+                                              id: data.supplyInfo.id,
+                                              type: newType,
+                                              name: newName,
+                                              description: newDescription,
+                                              dateFirst: data.supplyInfo.dateFirst,
+                                              dateLast: data.supplyInfo.dateLast,
+                                              amount: data.supplyInfo.amount,
+                                              minTime: data.supplyInfo.minTime,
+                                              location: data.supplyInfo.location,
+                                              status: data.supplyInfo.status,
+                                              sharingDate: data.supplyInfo.sharingDate,
+                                              editingDate: DateTime.now().toString(),
+                                              companyId: data.supplyInfo.companyId,
+                                              documentId: data.supplyInfo.documentId,
+                                              sharersIdList: data.supplyInfo.sharersIdList,
+                                              registrantsIdList: data.supplyInfo.registrantsIdList,
+                                              applicantsIdList: data.supplyInfo.applicantsIdList,
+                                              userId: data.supplyInfo.userId);
+                                          String status = await FirestoreService().updateSupply(newData);
+                                          if(status == "Ok"){
+                                            _pageControllerForDialog.nextPage(duration: Duration(milliseconds: 300), curve: Curves.bounceInOut);
+                                            read.setSupplyDetailsId(CombinedInfo(supplyInfo: newData, companyInfo: data.companyInfo, userInfo: data.userInfo));
+                                          }else{
+                                            _pageControllerForDialog.jumpToPage(3);
+                                          }
+                                        },
+                                        child: Container(
+                                          decoration: BoxDecoration(
+                                              color: appColors.blueDark,
+                                              borderRadius: BorderRadius.all(Radius.circular(5))
+                                          ),
+                                          child: Padding(
+                                            padding: const EdgeInsets.symmetric(horizontal: 8,vertical: 4),
+                                            child: Text("Evet",style: TextStyle(
+                                                color: appColors.white,
+                                                fontSize: 14,
+                                                fontFamily: "FontNormal",
+                                                decoration: TextDecoration.none
+                                            ),),
+                                          ),
                                         ),
                                       ),
-                                    ),
-                                  ],
-                                )
-                              ],
-                            ),
-                            Center(
-                              child: CircularProgressIndicator(
-                                color: appColors.blueLight,
-                              ),),
-                            Column(
-                              mainAxisAlignment: MainAxisAlignment.spaceAround,
-                              crossAxisAlignment: CrossAxisAlignment.center,
-                              children: [
-                                Icon(Icons.check_circle_outline_rounded,color: appColors.orange,size: 64,),
-                                Text("Değişiklikler\nkaydedildi",style: TextStyle(
-                                    color: appColors.blackLight,
-                                    fontSize: 16,
-                                    height: 1,
-                                    fontFamily: "FontNormal",
-                                    decoration: TextDecoration.none
-                                ),textAlign: TextAlign.center,
-                                ),
-                                GestureDetector(
-                                  onTap: () {
-                                    Navigator.pop(context);
-                                    ref.read(profilePageRiverpod).setEditingMode(false);
-                                  },
-                                  child: Container(
-                                    decoration: BoxDecoration(
-                                        color: appColors.orange,
-                                        borderRadius: BorderRadius.all(Radius.circular(5))
-                                    ),
-                                    child: Padding(
-                                      padding: const EdgeInsets.symmetric(horizontal: 8,vertical: 4),
-                                      child: Text("Tamam",style: TextStyle(
-                                          color: appColors.white,
-                                          fontSize: 14,
-                                          fontFamily: "FontNormal",
-                                          decoration: TextDecoration.none
-                                      ),),
-                                    ),
+                                    ],
+                                  )
+                                ],
+                              ),
+                              Center(
+                                child: CircularProgressIndicator(
+                                  color: appColors.blueLight,
+                                ),),
+                              Column(
+                                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                                crossAxisAlignment: CrossAxisAlignment.center,
+                                children: [
+                                  Icon(Icons.check_circle_outline_rounded,color: appColors.orange,size: 64,),
+                                  Text("Değişiklikler\nkaydedildi",style: TextStyle(
+                                      color: appColors.blackLight,
+                                      fontSize: 16,
+                                      height: 1,
+                                      fontFamily: "FontNormal",
+                                      decoration: TextDecoration.none
+                                  ),textAlign: TextAlign.center,
                                   ),
-                                )
-                              ],
-                            ),
-                            Column(
-                              mainAxisAlignment: MainAxisAlignment.spaceAround,
-                              crossAxisAlignment: CrossAxisAlignment.center,
-                              children: [
-                                Icon(Icons.error_outline_rounded,color: appColors.pink,size: 64,),
-                                Text("Bir hata\nmeydana geldi",style: TextStyle(
-                                    color: appColors.blackLight,
-                                    fontSize: 16,
-                                    height: 1,
-                                    fontFamily: "FontNormal",
-                                    decoration: TextDecoration.none
-                                ),textAlign: TextAlign.center,
-                                ),
-                                GestureDetector(
-                                  onTap: () {
-                                    Navigator.pop(context);
-                                  },
-                                  child: Container(
-                                    decoration: BoxDecoration(
-                                        color: appColors.blackLight,
-                                        borderRadius: BorderRadius.all(Radius.circular(5))
+                                  GestureDetector(
+                                    onTap: () {
+                                      Navigator.pop(context);
+                                      read.setEditingMode(false);
+                                      read.clear();
+                                      setState(() {
+
+                                      });
+                                    },
+                                    child: Container(
+                                      decoration: BoxDecoration(
+                                          color: appColors.orange,
+                                          borderRadius: BorderRadius.all(Radius.circular(5))
+                                      ),
+                                      child: Padding(
+                                        padding: const EdgeInsets.symmetric(horizontal: 8,vertical: 4),
+                                        child: Text("Tamam",style: TextStyle(
+                                            color: appColors.white,
+                                            fontSize: 14,
+                                            fontFamily: "FontNormal",
+                                            decoration: TextDecoration.none
+                                        ),),
+                                      ),
                                     ),
-                                    child: Padding(
-                                      padding: const EdgeInsets.symmetric(horizontal: 8,vertical: 4),
-                                      child: Text("Tamam",style: TextStyle(
-                                          color: appColors.white,
-                                          fontSize: 14,
-                                          fontFamily: "FontNormal",
-                                          decoration: TextDecoration.none
-                                      ),),
-                                    ),
+                                  )
+                                ],
+                              ),
+                              Column(
+                                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                                crossAxisAlignment: CrossAxisAlignment.center,
+                                children: [
+                                  Icon(Icons.error_outline_rounded,color: appColors.pink,size: 64,),
+                                  Text("Bir hata\nmeydana geldi",style: TextStyle(
+                                      color: appColors.blackLight,
+                                      fontSize: 16,
+                                      height: 1,
+                                      fontFamily: "FontNormal",
+                                      decoration: TextDecoration.none
+                                  ),textAlign: TextAlign.center,
                                   ),
-                                )
-                              ],
-                            ),
-                          ],
+                                  GestureDetector(
+                                    onTap: () {
+                                      Navigator.pop(context);
+                                    },
+                                    child: Container(
+                                      decoration: BoxDecoration(
+                                          color: appColors.blackLight,
+                                          borderRadius: BorderRadius.all(Radius.circular(5))
+                                      ),
+                                      child: Padding(
+                                        padding: const EdgeInsets.symmetric(horizontal: 8,vertical: 4),
+                                        child: Text("Tamam",style: TextStyle(
+                                            color: appColors.white,
+                                            fontSize: 14,
+                                            fontFamily: "FontNormal",
+                                            decoration: TextDecoration.none
+                                        ),),
+                                      ),
+                                    ),
+                                  )
+                                ],
+                              ),
+                            ],
+                          ),
                         ),
-                      ),
-                    );
-                  },
-                  barrierDismissible: false,
-                );
-              },
-              child: getPanelButton("KAYDET",18,"FontBold",appColors.blueDark,appColors.white)),
-        ],
+                      );
+                    },
+                    barrierDismissible: false,
+                  );
+                },
+                child: getPanelButton("Düzenlemeyi Kaydet",17,"FontNormal",appColors.blueDark,appColors.white)),
+          ],
+        ),
       ),
     );
   }

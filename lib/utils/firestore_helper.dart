@@ -86,6 +86,21 @@ class FirestoreService {
     }
   }
 
+  Future<String> updateSupply(SupplyInfo newData) async {
+    try {
+      Map<String, dynamic> json = newData.toJson();
+
+      await FirebaseFirestore.instance.collection('supplies').doc(newData.id).update(json);
+
+      return "Ok";
+    } catch (e) {
+      print('Belge güncellenirken bir hata oluştu: $e');
+      return "Error";
+    }
+  }
+
+
+
   Future<String> deleteSupply(String documentId, String uid, String otherUserId) async {
     try {
       QuerySnapshot userQuerySnapshot = await _firestore
@@ -1034,5 +1049,9 @@ class FirestoreService {
       return "Error";
     }
   }
+
+
+
+
 
 }

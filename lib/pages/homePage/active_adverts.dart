@@ -135,6 +135,25 @@ class _ActiveAdvertsState extends ConsumerState<ActiveAdverts> {
       }
     }
 
+    DateTime firstDateTime =  DateTime.parse(data.supplyInfo.dateFirst);
+    DateTime lastDateTime =  DateTime.parse(data.supplyInfo.dateLast);
+    String getSupplyStatus() {
+      DateTime now = DateTime.now();
+      print(firstDateTime);
+      print(lastDateTime);
+
+      if (lastDateTime.difference(now).inDays == -1) {
+        return "Son\nGün";
+      } else if (lastDateTime.difference(firstDateTime).inDays <= 7) {
+        return "Acil";
+      } else if (now.difference(sharingDateTime).inDays <= 2) {
+        return "Yeni";
+      } else {
+        return "";
+      }
+    }
+
+
     return Container(
       margin: EdgeInsets.symmetric(vertical: 8),
       padding: EdgeInsets.all(8.0),
@@ -189,7 +208,7 @@ class _ActiveAdvertsState extends ConsumerState<ActiveAdverts> {
             ],
           ),
           Padding(
-            padding: const EdgeInsets.symmetric(vertical: 2),
+            padding: const EdgeInsets.symmetric(vertical: 6),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               crossAxisAlignment: CrossAxisAlignment.center,
@@ -201,7 +220,7 @@ class _ActiveAdvertsState extends ConsumerState<ActiveAdverts> {
                       children: [
                         Padding(
                         padding: const EdgeInsets.only(right: 4),
-                        child: getText("Yeni", 12, "FontBold", appColors.orange,TextAlign.start),
+                        child: getText(getSupplyStatus(), 12, "FontBold", getSupplyStatus() == "Yeni" ? appColors.orange : appColors.pink,TextAlign.start),
                           ),
                         getText(data.supplyInfo.type, 14, "FontBold", appColors.black,TextAlign.start),
                       ],
@@ -224,7 +243,7 @@ class _ActiveAdvertsState extends ConsumerState<ActiveAdverts> {
             ),
           ),
           Padding(
-            padding: const EdgeInsets.only(top: 6.0),
+            padding: const EdgeInsets.only(top: 8.0),
             child: Row(
               children: [
                 Row(

@@ -204,7 +204,7 @@ class _FindSupplyState extends ConsumerState<FindSupply> {
                         filePath = result.files.single.path!;
                         String fileName = basename(filePath);
                         String? uid = FirebaseAuth.instance.currentUser?.uid;
-                        firebaseFileName = "${uid}_${fileName}";
+                        firebaseFileName = "${uid}_${DateTime.now().toString()}_${fileName}";
                         setState(() {
                           selectedFileName = fileName;
                         });
