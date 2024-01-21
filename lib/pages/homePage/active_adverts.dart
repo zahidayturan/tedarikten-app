@@ -137,6 +137,10 @@ class _ActiveAdvertsState extends ConsumerState<ActiveAdverts> {
 
     DateTime firstDateTime =  DateTime.parse(data.supplyInfo.dateFirst);
     DateTime lastDateTime =  DateTime.parse(data.supplyInfo.dateLast);
+
+
+    String lastDate = DateFormat('dd.MM.yyyy').format(lastDateTime);
+
     String getSupplyStatus() {
       DateTime now = DateTime.now();
       print(firstDateTime);
@@ -230,7 +234,7 @@ class _ActiveAdvertsState extends ConsumerState<ActiveAdverts> {
                       child: Row(
                         children: [
                           getText("İlan Son Tarihi: ", 12, "FontBold", appColors.black, TextAlign.start),
-                          getText(sharingDate, 12, "FontNormal", appColors.black, TextAlign.start),
+                          getText(lastDate.toString(), 12, "FontNormal", appColors.black, TextAlign.start),
                         ],
                       ),
                     ),

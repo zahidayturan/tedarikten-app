@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:tedarikten/constants/app_colors.dart';
 import 'package:tedarikten/models/combined_info.dart';
+import 'package:tedarikten/pages/supply_details_page.dart';
 import 'package:tedarikten/riverpod_management.dart';
 import 'package:tedarikten/utils/firestore_helper.dart';
 
@@ -378,20 +379,33 @@ class _RegisteredSupplyPage extends ConsumerState<RegisteredSupplyPage> {
                     crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
                       getLineText(getCompleteStatus(), 13, "FontNormal", appColors.blueDark,TextAlign.right),
-                      Container(
-                        height: 20,
-                        decoration: BoxDecoration(
-                            color: appColors.blueDark,
-                            borderRadius: BorderRadius.all(Radius.circular(5))
-                        ),
-                        child: Center(
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 4),
-                            child: Row(
-                              children: [
-                                getLineText("Detayları görüntüle", 12, "FontNormal", appColors.white, TextAlign.center),
-                                Icon(Icons.arrow_forward_ios_rounded,color: appColors.white,size: 11,)
-                              ],
+                      GestureDetector(
+                        onTap: () {
+                          int mode= 0;
+                          if(user!.uid == data.supplyInfo.userId){
+                            mode = 1;
+                          }
+                          ref.read(profilePageRiverpod).setSupplyDetailsId(data);
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (context) => SupplyDetailsPage(mode: mode,)),
+                          );
+                        },
+                        child: Container(
+                          height: 20,
+                          decoration: BoxDecoration(
+                              color: appColors.blueDark,
+                              borderRadius: BorderRadius.all(Radius.circular(5))
+                          ),
+                          child: Center(
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 4),
+                              child: Row(
+                                children: [
+                                  getLineText("Detayları görüntüle", 12, "FontNormal", appColors.white, TextAlign.center),
+                                  Icon(Icons.arrow_forward_ios_rounded,color: appColors.white,size: 11,)
+                                ],
+                              ),
                             ),
                           ),
                         ),
