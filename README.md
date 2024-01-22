@@ -8,12 +8,6 @@
 
 **Grup 5**
 
-*Hamza Bayar 21060638*
-
-*İsmet Zahid Ayturan 21060607*
-
-*İbrahim Ethem Akbıyık 21060671*
-
 <p align="center">
 
  <img src="/readmeAssets/banner-1.png" width=100% height=100% />
@@ -44,6 +38,26 @@ gelmektedir.
  <img src="/readmeAssets/ui-1.png" width=100% height=100% />
 </p>
 
+### Dependencies
+
+This project is built with a variety of great open source libraries and packages.
+
+
+*  [flutter_riverpod](https://pub.dev/packages/riverpod) - state-management [riverpod](https://riverpod.dev/)
+*  [path](https://pub.dev/packages/path) - cross-platform path manipulation
+*  [firebase_core](https://pub.dev/packages/firebase_core) - Which enables connecting to multiple Firebase apps
+*  [firebase_messaging](https://pub.dev/packages/firebase_messaging) - Firebase Messaging
+*  [firebase_auth](https://pub.dev/packages/firebase_auth) - Flutter plugin to use the Firebase Authentication API
+*  [firebase_storage](https://pub.dev/packages/firebase_storage) - Flutter plugin to use the Firebase Cloud Storage API
+*  [cloud_firestore](https://pub.dev/packages/cloud_firestore) - Flutter plugin to use the Cloud Firestore API
+*  [url_launcher](https://pub.dev/packages/url_launcher) - Flutter plugin for launching a URL
+*  [cupertino_icons](https://pub.dev/packages/cupertino_icons) - asset repo
+*  [file_picker](https://pub.dev/packages/file_picker) - File Picker, with extensions filtering support.
+*  [shared_preferences](https://pub.dev/packages/shared_preferences) - Wraps platform-specific persistent storage for simple data
+*  [intl](https://pub.dev/packages/intl) - Provides internationalization and localization facilities,
+*  [mockito](https://pub.dev/packages/mockito) - Mock library for Dart
+
+  
 ### Installation
 ```sh
 $ pub get
