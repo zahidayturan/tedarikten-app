@@ -15,22 +15,22 @@
 
 **Ödev istenirleri**
 
-- [ ] Bir kullanıcı tedarik paylaşabilirken aynı zamanda başkaları tarafından paylaşılan
+- [x] Bir kullanıcı tedarik paylaşabilirken aynı zamanda başkaları tarafından paylaşılan
 bir tedariğe de başvuru yapabilmektedir.
-- [ ] Bir firma temsilcisi olarak sisteme login olunduğunda ana akış sayfasına erişmiş
+- [x] Bir firma temsilcisi olarak sisteme login olunduğunda ana akış sayfasına erişmiş
 olunur ve akışta paylaşılan tedarikler görülür.
-- [ ] Kelime bazlı arama yaparak paylaşılan tedarik ihtiyaçları üzerinde arama yapabilir.
-- [ ] Paylaş seçeneği ile tedarik paylaşabilir.
-- [ ] Her tedariğin açıklaması, ve hangi sektör ile ilgili olduğu bilgisi ve gerekirse dosya
+- [x] Kelime bazlı arama yaparak paylaşılan tedarik ihtiyaçları üzerinde arama yapabilir.
+- [x] Paylaş seçeneği ile tedarik paylaşabilir.
+- [x] Her tedariğin açıklaması, ve hangi sektör ile ilgili olduğu bilgisi ve gerekirse dosya
 eklenerek ek yapılarak paylaşım yapılabilmektedir.
-- [ ] Bir kullanıcı paylaştığı tedarikleri listeleyebilmektedir. Listeledikleri tedariğin
+- [x] Bir kullanıcı paylaştığı tedarikleri listeleyebilmektedir. Listeledikleri tedariğin
 detay sayfasına gerek tedariği güncelleyebilmekte, bu tedarik için yapılan
 başvuruları, başvuran kişilerin profillerini görebilmektedir.
-- [ ] Bir tedarik paylaşımınıza başvuru yapıldığında uygulamadan size bildirim
+- [x] Bir tedarik paylaşımınıza başvuru yapıldığında uygulamadan size bildirim
 gelmektedir.
-- [ ] UI / UX
-- [ ] Kodlama düzeni ( clear code )
-- [ ] Unit Test ve Widget Test
+- [x] UI / UX
+- [x] Kodlama düzeni ( clear code )
+- [x] Unit Test ve Widget Test
 
 
 <p align="center">
