@@ -16,7 +16,7 @@
 
 <p align="center">
 
- <img src="/readmeAssets/banner-1.jpg" width=100% height=100% />
+ <img src="/readmeAssets/banner-1.png" width=100% height=100% />
 </p>
 
 **Ödev istenirleri**
@@ -41,7 +41,7 @@ gelmektedir.
 
 <p align="center">
 
- <img src="/readmeAssets/ui-1.jpg" width=100% height=100% />
+ <img src="/readmeAssets/ui-1.png" width=100% height=100% />
 </p>
 
 ### Installation
